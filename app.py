@@ -41,6 +41,11 @@ def get_chart_id(dob, birth_time, city, country):
     raw = f"{dob.isoformat()}|{birth_time.strftime('%H:%M')}|{city.strip().lower()}|{country.strip().lower()}"
     return hashlib.md5(raw.encode()).hexdigest()[:12]
 
+def is_production():
+    # Railway automatically sets RAILWAY_ENVIRONMENT, but we check both env and a custom flag.
+    return "RAILWAY_ENVIRONMENT" in os.environ or os.getenv("IS_PRODUCTION", "").lower() == "true"
+
+
 # Generate a unique Session ID for the user's visit if one doesn't exist yet
 if 'session_id' not in st.session_state:
     st.session_state['session_id'] = str(uuid.uuid4())
@@ -301,13 +306,14 @@ default_country_index = COUNTRIES.index("India")
 
 st.title(t["title"])
 
-with st.sidebar:
-    st.header("🔧 System Health")
-    for comp, ok, msg in diagnose():
-        icon = "🟢" if ok else "🔴"
-        st.text(f"{icon} {comp}: {msg}")
-    st.markdown("---")
-    st.caption("If any item above is 🔴, fix it before running a reading.")
+if not is_production():
+    with st.sidebar:
+        st.header("🔧 System Health")
+        for comp, ok, msg in diagnose():
+            icon = "🟢" if ok else "🔴"
+            st.text(f"{icon} {comp}: {msg}")
+        st.markdown("---")
+        st.caption("If any item above is 🔴, fix it before running a reading.")
 
 st.info(t["info"])
 st.write(t["intro"])
@@ -772,7 +778,8 @@ if submit_button:
             real_now = datetime.now(pytz.UTC)
             target_dt = extract_target_date(user_question, real_now)
             now_utc = target_dt  # All downstream code now uses the target date
-            st.caption(f"Debug — Target date calculated: {now_utc.strftime('%d %b %Y %H:%M %Z')}")
+            if not is_production():
+                st.caption(f"Debug — Target date calculated: {now_utc.strftime('%d %b %Y %H:%M %Z')}")
             dasha_data = calculate_vimshottari_dasha(
                 chart_data["Moon"]["degree_total"], utc_dt, now_utc
             )
@@ -996,7 +1003,8 @@ if submit_button:
 
             # --- SELECT WORKFLOW PROMPT ---
             workflow_type = classify_workflow(user_question)
-            st.caption(f"Debug — Workflow: {workflow_type}")
+            if not is_production():
+                st.caption(f"Debug — Workflow: {workflow_type}")
             system_prompt = WORKFLOWS[workflow_type].format(
                 chart_string=chart_string,
                 aspects_string=aspects_string,
@@ -1017,12 +1025,13 @@ if submit_button:
                 system_prompt += sensitive_addon
 
             # --- DEBUG: VIEW EXACT PROMPT ---
-            with st.expander("🔍 Debug — View raw prompt sent to DeepSeek"):
-                st.text(f"Workflow: {workflow_type}\n")
-                st.text(f"Target date: {now_utc.strftime('%d %b %Y %H:%M %Z')}\n")
-                st.text(f"System prompt length: {len(system_prompt)} chars\n")
-                st.text("-" * 40)
-                st.text(system_prompt)
+            if not is_production():
+                with st.expander("🔍 Debug — View raw prompt sent to DeepSeek"):
+                    st.text(f"Workflow: {workflow_type}\n")
+                    st.text(f"Target date: {now_utc.strftime('%d %b %Y %H:%M %Z')}\n")
+                    st.text(f"System prompt length: {len(system_prompt)} chars\n")
+                    st.text("-" * 40)
+                    st.text(system_prompt)
             log_prompt(system_prompt, workflow_type, user_question, chart_id)
 
             response = client.chat.completions.create(
@@ -1092,39 +1101,41 @@ if st.session_state["reading_ready"]:
     st.write("---")
     st.markdown(st.session_state["ai_response"])
 
-    with st.expander(t["expand"]):
-        st.markdown("### Core Chart (D1)")
-        st.text(st.session_state["chart_string"])
+    if not is_production():
+        with st.expander(t["expand"]):
+            st.markdown("### Core Chart (D1)")
+            st.text(st.session_state["chart_string"])
 
-        st.markdown("### Planetary Aspects")
-        st.text(st.session_state["aspects_string"])
+            st.markdown("### Planetary Aspects")
+            st.text(st.session_state["aspects_string"])
 
-        st.markdown(st.session_state["karaka_string"])
-        st.markdown(st.session_state["sudarshan_string"])
+            st.markdown(st.session_state["karaka_string"])
+            st.markdown(st.session_state["sudarshan_string"])
 
-        st.markdown("### Navamsa (D9) Chart")
-        st.text(st.session_state["d9_string"])
+            st.markdown("### Navamsa (D9) Chart")
+            st.text(st.session_state["d9_string"])
 
-        st.markdown(st.session_state["dasha_string"])
-        st.markdown("### LIVE TRANSITS")
-        st.text(st.session_state["gochar_string"])
+            st.markdown(st.session_state["dasha_string"])
+            st.markdown("### LIVE TRANSITS")
+            st.text(st.session_state["gochar_string"])
 
-        st.markdown("### Yogas & Activation")
-        st.text(st.session_state["yoga_string"])
+            st.markdown("### Yogas & Activation")
+            st.text(st.session_state["yoga_string"])
 
-        st.markdown("### Panchadha Maitri (5-Fold Friendship)")
-        st.text(st.session_state["panchadha_string"])
+            st.markdown("### Panchadha Maitri (5-Fold Friendship)")
+            st.text(st.session_state["panchadha_string"])
 
-        st.markdown("### Planetary Strength")
-        st.text(st.session_state["strength_string"])
+            st.markdown("### Planetary Strength")
+            st.text(st.session_state["strength_string"])
 
-        st.markdown("### Ashtakavarga (BAV + SAV)")
-        st.text(st.session_state["ashtakavarga_string"])
+            st.markdown("### Ashtakavarga (BAV + SAV)")
+            st.text(st.session_state["ashtakavarga_string"])
 
-        st.markdown("### Functional House Lords")
-        st.text(st.session_state["functional_lords_string"])
+            st.markdown("### Functional House Lords")
+            st.text(st.session_state["functional_lords_string"])
 
-        st.markdown("### Pratyantardasha (3-Tier Timing)")
-        pd = st.session_state["pd_data"]
-        st.write(f"**Current Pratyantardasha:** {pd['current_pd']}")
-        st.write(f"**From:** {pd['pd_start']} → **To:** {pd['pd_end']}")
+            st.markdown("### Pratyantardasha (3-Tier Timing)")
+            pd = st.session_state["pd_data"]
+            st.write(f"**Current Pratyantardasha:** {pd['current_pd']}")
+            st.write(f"**From:** {pd['pd_start']} → **To:** {pd['pd_end']}")
+
