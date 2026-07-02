@@ -8,9 +8,11 @@ from openai import OpenAI
 import re
 import requests
 import traceback
+import os
 from debug_utils import diagnose, log_crash, log_prompt, user_friendly_code
 import uuid
 import hashlib
+
 
 from engine import (
     get_nakshatra,
@@ -458,11 +460,20 @@ if submit_button:
 
     with st.spinner(t["spin"]):
         try:
-            if "DEEPSEEK_API_KEY" not in st.secrets:
-                st.error("🔑 API key not found. Please add DEEPSEEK_API_KEY to your Streamlit secrets.")
+            deepseek_key = None
+            try:
+                if hasattr(st, "secrets"):
+                    deepseek_key = st.secrets.get("DEEPSEEK_API_KEY")
+            except Exception:
+                pass
+
+            if not deepseek_key:
+                deepseek_key = os.getenv("DEEPSEEK_API_KEY")
+
+            if not deepseek_key:
+                st.error("🔑 API key not found. Please add DEEPSEEK_API_KEY to your Streamlit secrets or environment variables.")
                 st.stop()
 
-            deepseek_key = st.secrets["DEEPSEEK_API_KEY"]
             client = OpenAI(api_key=deepseek_key, base_url="https://api.deepseek.com")
 
             # --- STEP 1: GEOLOCATION & TIMEZONE ---
