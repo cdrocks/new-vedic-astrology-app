@@ -1128,4 +1128,3 @@ if st.session_state["reading_ready"]:
         pd = st.session_state["pd_data"]
         st.write(f"**Current Pratyantardasha:** {pd['current_pd']}")
         st.write(f"**From:** {pd['pd_start']} → **To:** {pd['pd_end']}")
-
