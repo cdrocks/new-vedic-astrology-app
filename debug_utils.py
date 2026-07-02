@@ -52,12 +52,15 @@ def diagnose():
     try:
         import streamlit as st
         key = None
-        if hasattr(st, "secrets") and st.secrets:
-            key = st.secrets.get("DEEPSEEK_API_KEY")
+        try:
+            if hasattr(st, "secrets"):
+                key = st.secrets.get("DEEPSEEK_API_KEY")
+        except Exception:
+            pass
         if not key:
             key = os.getenv("DEEPSEEK_API_KEY")
         key_ok = bool(key)
-        key_msg = "Found" if key_ok else "Missing: add DEEPSEEK_API_KEY to Streamlit secrets or .env"
+        key_msg = "Found" if key_ok else "Missing: add DEEPSEEK_API_KEY to Streamlit secrets or environment variables"
     except Exception as e:
         key_msg = f"Could not check secrets: {e}"
     results.append(("DeepSeek API Key", key_ok, key_msg))
