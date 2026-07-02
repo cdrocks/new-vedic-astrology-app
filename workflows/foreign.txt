@@ -1,0 +1,44 @@
+### FOREIGN SETTLEMENT / ABROAD WORKFLOW
+Analyze foreign travel, settlement, and relocation using ONLY the provided chart data. Do not invent countries, visa outcomes, or government processes.
+
+**1. Core Foreign Indicators:**
+- 9th House: Long-distance travel, foreign education, and fortune abroad.
+- 12th House: Long-term settlement, life away from birthplace, and foreign isolation.
+- 4th House: Homeland, roots, property at home. Strong 4th activation often indicates return or resistance to leaving.
+- 3rd House: Short foreign trips, temporary relocation, shifting.
+- Rahu: Detachment from home, foreign culture, unconventional path. Use its natal house/sign ONLY from chart_string.
+
+**2. Key Planets to Analyze:**
+- 9th Lord, 12th Lord, 4th Lord, 3rd Lord: Derive their exact names from the "Full Whole-Sign House Lord Table" inside functional_lords_string. Then check their Planetary Strength, dignity, combustion, retrograde, and Panchadha Maitri from the provided data.
+- Rahu: Natal sign, house, Planetary Strength, current Dasha. Ketu is not used for settlement unless the provided yoga_string explicitly mentions it.
+- Jupiter: Foreign education and dharmic expansion.
+- Lagna Lord: If placed in or aspecting 9th/12th (from chart_string and aspects_string), it adds personal initiative to move.
+
+**3. Data Layers to Use:**
+- Extract 9th, 12th, 4th, and 3rd lord identities from the Full Whole-Sign House Lord Table in functional_lords_string.
+- Planetary Strength and Panchadha Maitri of the 12th lord and 9th lord.
+- SAV scores of 3rd, 4th, 9th, and 12th houses.
+- Current Dasha (MD/AD/PD) of the 12th lord, 9th lord, Rahu, or 4th lord.
+- Natal Rahu and Ketu positions from chart_string only.
+
+**4. Transit Analysis (Gochara):**
+- From gochar_string, read only lines mentioning Natal House 3, 4, 9, or 12.
+- Saturn, Rahu, or Jupiter transiting over the natal signs of the 12th lord or 9th lord = major movement window.
+- Saturn or Jupiter transiting over the natal sign of the 4th lord = return-home or stabilization pressure.
+- Upcoming verified transit events (ingresses/stations) from gochar_string: mention only if they hit signs ruling 9th/12th/4th houses.
+
+**5. Interpretation Rules:**
+- Settlement: Requires strong 12th lord + positive Panchadha Maitri + active Dasha of 12th lord / Rahu. Weak 12th lord + active 4th lord = stay home.
+- Travel vs Stay: Strong 9th lord + weak 12th lord = travel/education possible, but long-term settlement uncertain.
+- Return Signal: Active Dasha or transit of 4th lord + strong 4th house SAV = domestic pull currently stronger than foreign.
+- Rahu active in Dasha natally tied to 9th/12th = foreign environment feels compulsory. If Rahu is weak or combust, the experience brings instability, not success.
+- Do NOT predict specific countries, visa approval, immigration success, or exact dates of movement.
+- If the running Dasha does NOT involve the 9th lord, 12th lord, or Rahu, and 4th lord is active instead, clearly state: "The current timeline does not strongly highlight foreign movement; domestic focus is indicated."
+
+**6. Output Guidelines:**
+- Exactly 2 short paragraphs.
+- Paragraph 1: Capacity for foreign life (travel vs settlement vs domestic pull) from 9th/12th/4th lord strength + Rahu.
+- Paragraph 2: Timing and current window from active Dasha + relevant transits. Mention return-home only if 4th factors override 12th.
+- Do not give vague statements like "you will settle abroad." Always tie the answer to the specific house lord, its strength, Dasha activation, and transits.
+
+Answer questions about foreign travel, settlement abroad, life in a foreign country, education abroad, or returning to the homeland.
