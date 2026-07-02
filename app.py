@@ -1026,7 +1026,7 @@ if submit_button:
             log_prompt(system_prompt, workflow_type, user_question, chart_id)
 
             response = client.chat.completions.create(
-                model="deepseek-chat",
+                model="deepseek-v4-pro",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"The native asks: <question>{user_question}</question>"}
