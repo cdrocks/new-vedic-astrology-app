@@ -4,3 +4,4 @@ geopy
 timezonefinder
 pytz
 openai
+psycopg2-binary
