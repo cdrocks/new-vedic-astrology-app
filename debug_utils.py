@@ -1,15 +1,69 @@
 # =======================
 # DEBUG & DIAGNOSTIC AGENT
 # =======================
+import hashlib
 import os
 import sys
 import json
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 
-# Auto-create the evidence folder next to this file
+# Auto-create the evidence folder next to this file.
+# IMPORTANT: This directory is inside the project root. Streamlit does not
+# automatically serve arbitrary subdirectories, but to be extra safe we keep
+# it outside any known static path and do not expose it via the UI. In a
+# future hardening step, move this to /tmp or a dedicated non-web volume.
 _LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "debug_logs")
 os.makedirs(_LOG_DIR, exist_ok=True)
+
+# How long to keep crash/prompt logs on disk (default 30 days).
+_LOG_RETENTION_DAYS = int(os.getenv("LOG_RETENTION_DAYS", "30"))
+
+
+def _hash_identifier(value: str) -> str:
+    """One-way hash for correlating logs to a user without storing raw PII."""
+    return hashlib.sha256(value.lower().strip().encode("utf-8")).hexdigest()[:16]
+
+
+def _sanitize_dob(dob) -> str:
+    """Keep only the year from a date string/object to reduce PII."""
+    if dob is None:
+        return None
+    try:
+        s = str(dob)
+        # ISO date strings start with YYYY-MM-DD
+        return s[:4] if len(s) >= 4 else s
+    except Exception:
+        return "[redacted]"
+
+
+def _sanitize_question(question: str) -> str:
+    """Truncate question text so logs don't store full user queries."""
+    if not question:
+        return None
+    text = str(question).strip()
+    if len(text) <= 40:
+        return text
+    return text[:40] + "...[truncated]"
+
+
+def _cleanup_old_logs():
+    """Delete log files older than _LOG_RETENTION_DAYS on startup."""
+    try:
+        cutoff = datetime.now() - timedelta(days=_LOG_RETENTION_DAYS)
+        for filename in os.listdir(_LOG_DIR):
+            path = os.path.join(_LOG_DIR, filename)
+            if os.path.isfile(path):
+                mtime = datetime.fromtimestamp(os.path.getmtime(path))
+                if mtime < cutoff:
+                    os.remove(path)
+    except Exception:
+        # Don't crash the app if cleanup fails.
+        pass
+
+
+# Run cleanup once at module import time.
+_cleanup_old_logs()
 
 
 def _now():
@@ -100,16 +154,41 @@ def diagnose():
     return results
 
 
+def is_production():
+    return "RAILWAY_ENVIRONMENT" in os.environ or os.getenv("IS_PRODUCTION", "").lower() == "true"
+
+
 def log_crash(exc, context_dict):
     ts = _now()
-    out_path = os.path.join(_LOG_DIR, f"crash_{ts}.json")
+
+    # Sanitize PII before writing to disk.
+    safe_context = {}
+    for key, value in (context_dict or {}).items():
+        if key == "identifier":
+            safe_context["identifier_hash"] = _hash_identifier(value) if value else None
+        elif key == "dob":
+            safe_context["dob_year"] = _sanitize_dob(value)
+        elif key == "question":
+            safe_context["question_preview"] = _sanitize_question(value)
+        else:
+            # city, country, chart_id, workflow are lower-sensitivity but we still
+            # keep them as-is; city/country are not unique identifiers.
+            safe_context[key] = value
+
     payload = {
         "timestamp": ts,
         "error_type": type(exc).__name__,
         "error_message": str(exc),
-        "context": context_dict,
+        "context": safe_context,
         "traceback": traceback.format_exc()
     }
+    if is_production():
+        # Log securely to stdout/stderr for display on the private Railway dashboard logs
+        import sys
+        print(f"CRASH OCCURRED: {json.dumps(payload, ensure_ascii=False)}", file=sys.stderr)
+        return "Logged to Railway console"
+
+    out_path = os.path.join(_LOG_DIR, f"crash_{ts}.json")
     try:
         with open(out_path, "w", encoding="utf-8") as f:
             json.dump(payload, f, ensure_ascii=False, indent=2)
@@ -120,6 +199,9 @@ def log_crash(exc, context_dict):
 
 
 def log_prompt(system_prompt, workflow, question, chart_id):
+    if is_production():
+        return "Disabled in production"
+
     ts = _now()
     out_path = os.path.join(_LOG_DIR, f"prompt_{ts}.json")
     payload = {

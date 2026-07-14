@@ -273,12 +273,18 @@ def detect_yogas(chart_data, asc_sign_idx):
         if chart_data[p].get("dignity") == "Debilitated":
             deb_sign = chart_data[p]["sign"]
             deb_lord = SIGN_LORDS[deb_sign]
-            if deb_lord in chart_data and house_of(deb_lord) in KENDRAS:
+            cancelled_by_lagna = deb_lord in chart_data and house_of(deb_lord) in KENDRAS
+            cancelled_by_moon = deb_lord in chart_data and (
+                chart_data.get("Moon") and
+                (chart_data[deb_lord]["house"] - chart_data["Moon"]["house"]) % 12 + 1 in KENDRAS
+            )
+            if cancelled_by_lagna or cancelled_by_moon:
+                source = "Lagna" if cancelled_by_lagna else "Moon"
                 yogas.append({
                     "name": "Neecha Bhanga Raja Yoga",
                     "strength": 78,
                     "planets": [p, deb_lord],
-                    "desc": f"{p}'s debilitation is cancelled (Neecha Bhanga), turning weakness into eventual strength and success after struggle."
+                    "desc": f"{p}'s debilitation is cancelled (Neecha Bhanga) because {deb_lord} is in a Kendra from {source}, turning weakness into eventual strength and success after struggle."
                 })
 
     # 7. Chandra-Mangal

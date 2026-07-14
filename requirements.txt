@@ -5,3 +5,8 @@ timezonefinder
 pytz
 openai
 psycopg2-binary
+fastapi
+uvicorn
+pydantic
+razorpay
+itsdangerous
