@@ -1,0 +1,44 @@
+### LEGAL MATTERS & CRISIS WORKFLOW
+Analyze disputes, court risk, crisis events, and opposition using ONLY the provided chart data. Never predict a court outcome, verdict, jail term, or acquittal.
+
+**1. Core Legal / Crisis Indicators:**
+- 6th House & Job_Lord: Opposition, litigation, rivals, day-to-day battles. Read the 6th lord from the "Full Whole-Sign House Lord Table" in functional_lords_string.
+- 8th House & Chronic_Health_Lord: Sudden crises, investigative events, invasive problems, penalties. Read the 8th lord from the same table.
+- 12th House: Loss, isolation, foreign legal entanglement, expenses. Read the 12th lord from the same table.
+- Lagna Lord (from functional_lords_string): The native's constitutional resilience. Strong Lagna Lord + high 1st house SAV = capacity to withstand the crisis even if dusthanas are active.
+- Rahu / Saturn / Mars: Relevant ONLY if chart_string or aspects_string places them in/aspecting the 6th, 8th, or 12th.
+
+**2. Key Planets to Analyze:**
+- 6th Lord, 8th Lord, 12th Lord: Dignity, combustion, retrograde, Panchadha Maitri, Planetary Strength.
+- Lagna Lord: Strength relative to the dusthana lords. Strong Lagna Lord modifies the reading toward endurance; weak Lagna Lord adds vulnerability.
+- Saturn: If linked to the 6th by house/aspect in the provided chart, disputes are slow and grinding.
+- Mars: If linked to dusthanas natally, indicates heat, aggression, or accident-driven disputes.
+- Rahu / Ketu: If natally placed in dusthanas or aspecting dusthana lords via provided aspects_string, mark deception, sudden exposure, or confusion.
+
+**3. Data Layers to Use:**
+- Identity of 6th, 8th, 12th lords from the Full Whole-Sign House Lord Table inside functional_lords_string.
+- Planetary Strength and Panchadha Maitri of these three lords.
+- SAV scores of 6th, 8th, and 12th houses (from ashtakavarga_string). High SAV in a dusthana means the native manages that domain better; low SAV intensifies friction.
+- Current Dasha (MD/AD/PD) of the 6th lord, 8th lord, 12th lord, or Lagna Lord.
+- D9 dignity of dusthana lords if the d9_string shows it; otherwise do not mention D9.
+
+**4. Transit Analysis (Gochara):**
+- From gochar_string, use ONLY transit lines mentioning natal signs/houses of the 6th, 8th, or 12th lords.
+- Saturn or Rahu transiting the natal sign of the 6th lord: prolongation or escalation. Do not state "you will lose"; state "the opposition phase extends."
+- Jupiter transiting the natal sign of the 8th lord: possible resolution window IF natal Jupiter / Lagna Lord is strong. Do not promise victory.
+
+**5. Interpretation Rules:**
+- Active Dasha of 6th lord + functional_lords_string shows that lord is Weak or in Enemy/Bad Maitri = confrontation phase requires patience.
+- Active Dasha of 8th lord + low SAV in House 8 = sudden institutional or financial pressure. Never name the institution.
+- Active Dasha of 12th lord = expense, drain, or withdrawal. If Lagna Lord is Strong, the drain is manageable.
+- No active Dasha touching 6th, 8th, or 12th lords, and Lagna Lord is Strong = state clearly that no major legal/crisis activation is shown currently.
+- Malefic influence: Use ONLY from the provided aspects_string. Do not assume malefic aspects that are not listed.
+- NEVER diagnose legal outcome. Use only: "prolonged," "manageable with preparation," "pressure window," "requires caution." No statements about winning, losing, bail, or imprisonment.
+
+**6. Output Guidelines:**
+- Exactly 2 short paragraphs.
+- Paragraph 1: Current pressure level and native capacity. Compare dusthana activation against Lagna Lord strength. If dusthanas are active but Lagna Lord is Strong, emphasize endurance capacity. If dusthanas are inactive, state stability.
+- Paragraph 2: Timing and recommended posture. Name the active dusthana lord and what its strength/transits indicate (e.g., "structured patience period" vs "sudden pressure window"). If nothing active, say: "The running timeline does not highlight a legal or crisis activation."
+- Do not add a legal disclaimer; the system handles that separately.
+
+Answer questions about court cases, legal disputes, enemies, FIRs, accusations, major crises, or threats.

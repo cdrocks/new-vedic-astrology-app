@@ -1,0 +1,16 @@
+{
+  "timestamp": "20260714_144412",
+  "error_type": "ValueError",
+  "error_message": "DATABASE_URL (or SUPABASE_DB_URL) environment variable not set",
+  "context": {
+    "identifier_hash": "7dba4a585337f12e",
+    "dob_year": "1981",
+    "time": "08:21:00",
+    "city": "Indore, India",
+    "country": "India",
+    "question_preview": "Expecting a project. client are not gett...[truncated]",
+    "workflow": "foreign",
+    "chart_id": "9ff5e4b9ab9d"
+  },
+  "traceback": "Traceback (most recent call last):\n  File \"/Users/chinmayd819gmail.com/Desktop/Rashi/DO NOT DELETE APP/new-vedic-astrology-app/app.py\", line 1379, in <module>\n    save_reading(\n  File \"/Users/chinmayd819gmail.com/Desktop/Rashi/DO NOT DELETE APP/new-vedic-astrology-app/db.py\", line 560, in save_reading\n    conn = get_connection()\n           ^^^^^^^^^^^^^^^^\n  File \"/Users/chinmayd819gmail.com/Desktop/Rashi/DO NOT DELETE APP/new-vedic-astrology-app/db.py\", line 42, in get_connection\n    raise ValueError(\nValueError: DATABASE_URL (or SUPABASE_DB_URL) environment variable not set\n"
+}

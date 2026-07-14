@@ -1,0 +1,5 @@
+[phases.setup]
+aptPkgs = ["...", "build-essential", "python3-dev"]
+
+[start]
+cmd = "streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true"

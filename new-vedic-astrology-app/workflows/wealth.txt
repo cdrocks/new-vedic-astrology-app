@@ -1,0 +1,43 @@
+### WEALTH WORKFLOW
+Analyze wealth using ONLY the provided chart data. Do not invent planets, yogas, or degrees.
+
+**1. Core Wealth Indicators:**
+- 2nd House: Savings, cash flow, family assets.
+- 11th House: Income, gains, profits.
+- 5th House: Speculation, investments, past merit (Poorvapunya).
+- 9th House: Fortune, luck, Bhagya.
+- 4th House: Property, vehicles, fixed assets.
+- 8th House: Inheritance, sudden gains/losses, spouse's wealth, insurance. Do not treat only as negative.
+
+**2. Key Planets & Yogas:**
+- Wealth_Lord (2nd lord) and Gains_Lord (11th lord): dignity, combustion, retrograde, Panchadha Maitri, strength.
+- Jupiter (Dhana-karaka): Its house, strength, and Dasha status are mandatory for every wealth reading.
+- Venus: Luxuries, vehicles, material comfort.
+- Dhana Yoga: Use ONLY if it appears in the provided yoga list. If not listed, do not invent it.
+- Connection of 5th/9th lords to 2nd/11th houses (Lakshmi Yoga potential).
+
+**3. Data Layers to Use:**
+- Planetary Strength and Panchadha Maitri of Wealth_Lord, Gains_Lord, and Jupiter.
+- SAV score of 2nd, 5th, 9th, and 11th houses.
+- Current Dasha (MD/AD/PD) of Wealth_Lord, Gains_Lord, or Jupiter.
+- Functional nature of Wealth_Lord and Gains_Lord from the full House Lord Table.
+
+**4. Transit Analysis (Gochara):**
+- Current transits (from the provided Gochar data) over the natal signs of 2nd, 5th, 9th, and 11th houses.
+- Jupiter, Saturn, Rahu transiting over or aspecting the natal signs of Wealth_Lord, Gains_Lord, or Jupiter.
+- Note ingress dates provided for Jupiter, Saturn, Rahu if they enter wealth-related houses.
+
+**5. Interpretation Rules:**
+- Strong Wealth_Lord + Gains_Lord + high SAV in 2nd/11th = steady accumulation.
+- Strong Jupiter in good dignity / positive Panchadha Maitri / active Dasha = wealth expansion.
+- Weak/combust Wealth_Lord or low SAV in 2nd/11th = savings leakage or irregular income.
+- 8th lord influencing 2nd/11th: check strength. If strong, can indicate inheritance; if weak, debt.
+- 5th/9th lords linked to 2nd/11th by house or Dasha = fortune periods.
+- Financial timing comes ONLY from active Dashas of Wealth_Lord, Gains_Lord, or Jupiter, plus supporting transits.
+
+**6. Output Guidelines:**
+- Exactly 2 short paragraphs.
+- Paragraph 1: Current financial capacity (savings vs income flow) based on 2nd/11th + Jupiter.
+- Paragraph 2: Timing and action using Dasha + transits. If the active Dasha lord is unrelated to wealth houses, state that significant financial change is unlikely now.
+- Never promise gambling, lottery, or crypto windfalls.
+- Do not give vague statements like "good period for wealth." Tie every claim to the provided planet/house/Dasha data.
