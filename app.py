@@ -9,9 +9,25 @@ import re
 import requests
 import traceback
 import os
-from debug_utils import diagnose, log_crash, log_prompt, user_friendly_code
+import json
+import logging
+from urllib.parse import quote
+from debug_utils import diagnose, is_production, log_crash, log_prompt, user_friendly_code
 import uuid
 import hashlib
+
+from db import (
+    init_db,
+    is_valid_identifier,
+    get_or_create_user,
+    has_available_credit,
+    consume_credit,
+    count_recent_events,
+    record_rate_limit_event,
+    cleanup_old_rate_limit_events,
+    save_reading,
+)
+from handoff_token import verify_handoff_token
 
 
 from engine import (
@@ -32,19 +48,85 @@ from engine import (
 from prompts import COMMON_RULES, WORKFLOWS, classify_workflow
 
 
-# --- FREE QUESTION LIMIT SYSTEM ---
-if "CHART_USAGE" not in st.session_state:
-    st.session_state["CHART_USAGE"] = {}  # Tracks how many questions each birth chart has asked
+# --- FREE QUESTION LIMIT SYSTEM (DB-backed) ---
+# Initialize the Postgres tables on startup. Safe to call every run.
+try:
+    init_db()
+    cleanup_old_rate_limit_events(max_age_seconds=86400)
+except Exception:
+    # Don't crash the UI if the DB is temporarily unreachable; the credit gate
+    # will surface a friendly error when the user submits.
+    pass
+
+
+# --- RATE LIMIT CONFIGURATION ---
+# Configurable via environment variables so thresholds can be tuned without redeploy.
+_READING_SUBMISSIONS_PER_IP_PER_HOUR = int(
+    os.getenv("READING_SUBMISSIONS_PER_IP_PER_HOUR", "5")
+)
+_READING_RATE_LIMIT_WINDOW_SECONDS = int(
+    os.getenv("READING_RATE_LIMIT_WINDOW_SECONDS", "3600")
+)
+
+
+def _skip_credit_check() -> bool:
+    """Local testing helper: set SKIP_CREDIT_CHECK=1 to bypass the credit gate."""
+    return os.getenv("SKIP_CREDIT_CHECK", "").lower() in ("1", "true", "yes")
+
+
+def _get_client_ip() -> str:
+    """
+    Extract the client IP from Streamlit's request headers.
+    Railway sets X-Forwarded-For; fall back to the direct remote address.
+    """
+    try:
+        headers = st.context.headers
+    except Exception:
+        headers = {}
+
+    forwarded_for = headers.get("X-Forwarded-For", "")
+    if forwarded_for:
+        # X-Forwarded-For can be a comma-separated list; the first entry is the client.
+        return forwarded_for.split(",")[0].strip()
+
+    return headers.get("X-Real-Ip", headers.get("Remote-Addr", "unknown"))
+
+
+def _is_rate_limited_for_ip(ip: str) -> bool:
+    """Check whether the given IP has exceeded the submission rate limit.
+
+    If the database is unreachable, fail open so a temporary DB outage does
+    not block legitimate users with an unhandled error.
+    """
+    if ip in ("unknown", "", "127.0.0.1"):
+        # Don't rate-limit local/unknown IPs aggressively, but still allow logging.
+        return False
+    try:
+        recent = count_recent_events(
+            ip,
+            "reading_submission",
+            _READING_RATE_LIMIT_WINDOW_SECONDS,
+        )
+        return recent >= _READING_SUBMISSIONS_PER_IP_PER_HOUR
+    except Exception:
+        # Fail open on DB errors; log is not critical here.
+        return False
+
+
+def _record_reading_submission(ip: str):
+    """Record a reading submission event for rate limiting."""
+    if not ip or ip == "unknown":
+        return
+    try:
+        record_rate_limit_event(ip, "reading_submission")
+    except Exception:
+        # Don't block the user if rate-limit logging fails.
+        pass
 
 def get_chart_id(dob, birth_time, city, country):
     """Creates a unique code from birth details. Same person = same code always."""
     raw = f"{dob.isoformat()}|{birth_time.strftime('%H:%M')}|{city.strip().lower()}|{country.strip().lower()}"
     return hashlib.md5(raw.encode()).hexdigest()[:12]
-
-def is_production():
-    # Railway automatically sets RAILWAY_ENVIRONMENT, but we check both env and a custom flag.
-    return "RAILWAY_ENVIRONMENT" in os.environ or os.getenv("IS_PRODUCTION", "").lower() == "true"
-
 
 # Generate a unique Session ID for the user's visit if one doesn't exist yet
 if 'session_id' not in st.session_state:
@@ -58,6 +140,24 @@ if "city_input" not in st.session_state:
     st.session_state["city_input"] = ""
 if "country_select" not in st.session_state:
     st.session_state["country_select"] = "India"
+if "identifier_input" not in st.session_state:
+    st.session_state["identifier_input"] = ""
+
+# --- HANDLE WORDPRESS RETURN LINK ---
+# If the user is returning from the WordPress pricing page, the URL will contain
+# ?uid=<identifier>&token=<handoff_token>. Verify the token before trusting the
+# identifier. This is a convenience/privacy safeguard only; it does NOT grant
+# credits (that happens via Razorpay webhook signature verification).
+_query_uid = st.query_params.get("uid", "")
+_query_token = st.query_params.get("token", "")
+if _query_uid and _query_token:
+    try:
+        _verified_uid = verify_handoff_token(_query_token)
+        if _verified_uid and _verified_uid.lower() == str(_query_uid).strip().lower():
+            st.session_state["identifier_input"] = _verified_uid
+    except Exception:
+        pass
+    # If verification fails, leave the field empty (don't error loudly).
 
 # ==========================================
 # TARGET DATE EXTRACTOR (Future Questions)
@@ -236,7 +336,130 @@ def classify_question(text: str):
     return "ALLOWED", ",".join(flagged) if flagged else "none"
 
 
+# --- AI SECOND-PASS SAFETY CLASSIFIER ---
+# Used only for questions that pass the regex-based classify_question() above.
+# This catches rephrased intent that regex misses (e.g. poetic or indirect wording
+# about death, self-harm, harming others, or psychological distress).
 
+_AI_SAFETY_SYSTEM_PROMPT = """You are a safety classifier for a Vedic astrology Q&A service.
+Classify the user's question into exactly one of these categories:
+- fatalistic          (questions about death, dying, lifespan, or when/how someone will die)
+- occult_harm         (questions about black magic, curses, harming others, revenge, vashikaran, witchcraft)
+- gambling            (questions about lottery, betting, stock/crypto tips, gambling outcomes)
+- illegal             (questions about illegal acts, cheating, fraud, evading the law)
+- mental_health_risk    (questions showing signs of psychological distress, self-harm, paranoia, delusions, or persecution beliefs)
+- safe                (none of the above)
+
+Err on the side of caution. Indirect, poetic, hypothetical, or disguised wording still counts if the underlying intent matches a category above.
+
+Respond with a single JSON object and no other text:
+{"category": "<one of fatalistic|occult_harm|gambling|illegal|mental_health_risk|safe>", "confidence": "<high|medium|low>"}
+"""
+
+
+def _strip_markdown_json_fences(text: str) -> str:
+    """Remove markdown code fences if the model wraps JSON in them."""
+    text = text.strip()
+    if text.startswith("```"):
+        text = text[3:]
+    if text.endswith("```"):
+        text = text[:-3]
+    text = text.strip()
+    if text.lower().startswith("json"):
+        text = text[4:].strip()
+    return text
+
+
+def ai_classify_question(text: str, client: OpenAI) -> tuple[str, str]:
+    """
+    Second-pass AI safety classifier.
+    Returns (category, confidence).
+    On any failure (API error, parse error, unexpected format), defaults to
+    ('ai_error', 'low') so the caller can treat it as flagged for manual review
+    rather than silently passing it through.
+    """
+    try:
+        response = client.chat.completions.create(
+            model="deepseek-chat",  # cheaper/faster than deepseek-v4-pro
+            messages=[
+                {"role": "system", "content": _AI_SAFETY_SYSTEM_PROMPT},
+                {"role": "user", "content": f"Question: {text}"},
+            ],
+            temperature=0.0,
+            max_tokens=60,
+        )
+        raw = response.choices[0].message.content or ""
+        raw = _strip_markdown_json_fences(raw)
+        parsed = json.loads(raw)
+        category = str(parsed.get("category", "")).strip().lower()
+        confidence = str(parsed.get("confidence", "")).strip().lower()
+        if category not in {
+            "fatalistic",
+            "occult_harm",
+            "gambling",
+            "illegal",
+            "mental_health_risk",
+            "safe",
+        }:
+            return "ai_error", "low"
+        if confidence not in {"high", "medium", "low"}:
+            confidence = "low"
+        return category, confidence
+    except Exception:
+        return "ai_error", "low"
+
+
+# Lightweight in-memory counters for safety block sources. These are reset on
+# each deploy; they are only used to tune the regex list over time.
+_safety_block_stats = {"regex": 0, "ai": 0}
+
+
+# --- PROMPT INJECTION PRE-CHECK ---
+# Separate from content safety (classify_question / ai_classify_question).
+# This catches common attempts to override the system prompt before the
+# question is sent to the LLM. No credit is consumed if triggered.
+
+_PROMPT_INJECTION_PHRASES = [
+    "ignore previous instructions",
+    "ignore all previous instructions",
+    "ignore the above",
+    "disregard the above",
+    "disregard previous instructions",
+    "system prompt",
+    "reveal your instructions",
+    "reveal your system prompt",
+    "you are now",
+    "you are a",
+    "pretend you are",
+    "act as",
+    "new role",
+    "change your role",
+    "override",
+    "bypass",
+    "jailbreak",
+    "DAN",
+    "do anything now",
+]
+
+
+def _contains_prompt_injection(text: str) -> bool:
+    """Simple case-insensitive substring check for common injection phrases."""
+    lowered = text.lower()
+    return any(phrase in lowered for phrase in _PROMPT_INJECTION_PHRASES)
+
+
+
+def _log_safety_block(source: str, category: str):
+    """
+    Log that a question was blocked by the safety layer.
+    We log only the source (regex/ai) and category, not the full question text,
+    to avoid storing sensitive user content in easily accessible logs.
+    """
+    logger = logging.getLogger("safety")
+    logger.info("Question blocked by safety layer", extra={
+        "block_source": source,
+        "block_category": category,
+    })
 
 
 # ==========================================
@@ -248,7 +471,17 @@ t = {
     "title": "Vedic Astrology Reader",
     "info": "This app uses advanced mathematical and reasoning tools to provide guidance. For suggestions and queries, mail: astrologerchinmay@gmail.com",
     "intro": "Enter your birth details below to receive a deeply personalized astrological reading. If you do not know your exact time of birth, please select 12:00",
-    "privacy": "We never ask for your name, email, or phone number. Your chart details are used solely for calculations and are not saved on this server",
+    "privacy": "Your chart details are used solely for calculations. Your email or phone is used only to track your question credits.",
+    "identifier": "Email or phone number (used only to track your question credits)",
+    "identifier_ph": "e.g., user@example.com or +91 98765 43210",
+    "identifier_warn": "⚠️ Please enter a valid email address or phone number.",
+    "credit_exhausted": "You've used your free question. Get more readings — 3 for ₹199, 5 for ₹299, or 8 for ₹449.",
+    "pricing_link_text": "Get more readings →",
+    "check_balance": "Check my balance",
+    "free_remaining": "🎟️ You have **1 free question** remaining. After that, purchase credits to continue.",
+    "free_used_paid_remaining": "🎟️ Free question: used | Paid credits remaining: **{credits_remaining}**",
+    "server_unreachable": "⚠️ Could not reach the credit server. Please try again in a moment.",
+    "rate_limited": "You've made several requests recently — please wait a bit and try again.",
     "dob": "Date of Birth",
     "time": "Time of Birth (24-hour format)",
     "city": "City & Country of Birth",
@@ -268,6 +501,8 @@ t = {
     "blocked_short": "⚠️ Your question is too brief. Please describe your concern in a full sentence.",
     "blocked_unrelated": "⚠️ This does not appear to be an astrological question. Please ask something related to your chart and life circumstances.",
     "blocked_mental_health": "⚠️ We cannot interpret experiences involving paranoia, supernatural attacks, or persecution beliefs. If these experiences are causing distress, please seek support from a trusted professional or person in your life.",
+    "blocked_ai_flagged": "⚠️ This question can't be answered as phrased. Please rephrase it in a way focused on your life themes, career, relationships, health outlook, finance, or spiritual growth. If you're going through a difficult time, consider speaking with a mental health professional or a trusted person in your life.",
+    "blocked_prompt_injection": "⚠️ Your question contains text that looks like an instruction to the AI. Please rephrase it as a genuine astrological question about your chart.",
     "agree": "I confirm I am 18 or older and agree to the [Terms & Conditions](https://eighthouse.in/terms-and-conditions/) and Privacy Policy.",
     "agree_warn": "⚠️ You must confirm you are 18 or older and agree to the terms to receive a reading.",
 }
@@ -349,10 +584,51 @@ with col1:
 
 with col2:
     st.text_input("City / Town", placeholder="e.g., Mumbai", key="city_input")
-    st.selectbox("Country", COUNTRIES, index=default_country_index, key="country_select")
+    st.selectbox(
+        "Country",
+        COUNTRIES,
+        key="country_select",
+    )
 
     city_part = st.session_state["city_input"].strip()
     city_input = f"{city_part}, {st.session_state['country_select']}" if city_part else ""
+
+
+# ==========================================
+# 1.25 IDENTIFIER / CREDIT TRACKING
+# ==========================================
+
+st.write("---")
+
+st.text_input(
+    t["identifier"],
+    placeholder=t["identifier_ph"],
+    key="identifier_input",
+)
+identifier = st.session_state["identifier_input"].strip()
+
+# Show credit status for the provided identifier, with a manual "Check my balance"
+# button so we don't query the DB on every keystroke.
+if identifier:
+    if is_valid_identifier(identifier):
+        col_balance, col_button = st.columns([3, 1])
+        with col_button:
+            check_balance = st.button(t["check_balance"], key="check_balance_btn")
+        if check_balance:
+            try:
+                user = get_or_create_user(identifier)
+                if user["free_credit_used"]:
+                    col_balance.caption(
+                        t["free_used_paid_remaining"].format(
+                            credits_remaining=user["credits_remaining"]
+                        )
+                    )
+                else:
+                    col_balance.caption(t["free_remaining"])
+            except Exception:
+                col_balance.caption(t["server_unreachable"])
+    else:
+        st.warning(t["identifier_warn"])
 
 
 # ==========================================
@@ -388,12 +664,6 @@ with st.expander("💡 Not sure what to ask? Click here for ideas"):
         st.button("🧠 Mental Clarity", on_click=set_question, args=("Based on my Moon's exact placement, what daily habits or environments will bring me the most mental clarity right now?",), use_container_width=True)
 
 st.write("---")
-
-# Show free question countdown before the button
-temp_chart_id = get_chart_id(dob_input, time_input, st.session_state["city_input"], st.session_state["country_select"])
-used = st.session_state["CHART_USAGE"].get(temp_chart_id, 0)
-remaining = max(0, 3 - used)
-st.caption(f"🎟️ Free questions remaining for this chart: **{remaining}/3**")
 
 user_agrees = st.checkbox(t["agree"])
 submit_button = st.button(t["btn"], type="primary")
@@ -448,40 +718,81 @@ if submit_button:
         st.warning(t["warn"])
         st.stop()
 
-    # --- QUESTION FILTER GATE ---
+    if not identifier:
+        st.warning(t["identifier_warn"])
+        st.stop()
+
+    if not is_valid_identifier(identifier):
+        st.warning(t["identifier_warn"])
+        st.stop()
+
+    # --- QUESTION FILTER GATE (regex first pass) ---
     status, flag = classify_question(user_question)
     if status == "BLOCKED":
+        _safety_block_stats["regex"] += 1
+        _log_safety_block("regex", flag)
         msg_key = f"blocked_{flag}"
         display_msg = t.get(msg_key, t.get("blocked_unrelated"))
         st.error(display_msg)
         st.stop()
 
-    # --- 3 QUESTION LIMIT GATE ---
+    # --- INITIALIZE DEEPSEEK CLIENT (needed for AI safety classifier) ---
+    deepseek_key = None
+    try:
+        if hasattr(st, "secrets"):
+            deepseek_key = st.secrets.get("DEEPSEEK_API_KEY")
+    except Exception:
+        pass
+
+    if not deepseek_key:
+        deepseek_key = os.getenv("DEEPSEEK_API_KEY")
+
+    if not deepseek_key:
+        st.error("🔑 API key not found. Please add DEEPSEEK_API_KEY to your Streamlit secrets or environment variables.")
+        st.stop()
+
+    client = OpenAI(api_key=deepseek_key, base_url="https://api.deepseek.com")
+
+    # --- AI SECOND-PASS SAFETY CLASSIFIER ---
+    # Only run for questions that passed the regex filter. This catches rephrased
+    # or indirect intent that regex misses. No credit is consumed if blocked here.
+    ai_category, ai_confidence = ai_classify_question(user_question, client)
+    if ai_category != "safe" and ai_confidence in ("high", "medium"):
+        _safety_block_stats["ai"] += 1
+        _log_safety_block("ai", ai_category)
+        st.error(t["blocked_ai_flagged"])
+        st.stop()
+
+    # --- PROMPT INJECTION PRE-CHECK ---
+    # Separate from content safety. If the user tries to override the system
+    # prompt, block before the API call and don't consume a credit.
+    if _contains_prompt_injection(user_question):
+        st.error(t["blocked_prompt_injection"])
+        st.stop()
+
+    # --- IP RATE LIMIT GATE ---
+    client_ip = _get_client_ip()
+    if _is_rate_limited_for_ip(client_ip):
+        st.error(t["rate_limited"])
+        st.stop()
+
+    # --- CREDIT LIMIT GATE ---
     chart_id = get_chart_id(dob_input, time_input, st.session_state["city_input"], st.session_state["country_select"])
 
-    used_count = st.session_state["CHART_USAGE"].get(chart_id, 0)
-    if used_count >= 3:
-        st.error("🔒 You have already used all 3 free questions for this birth chart. Please try again later.")
+    try:
+        if not _skip_credit_check() and not has_available_credit(identifier):
+            # User has no credits. Show pricing link with identifier in URL.
+            encoded_uid = quote(identifier)
+            pricing_url = f"https://eighthouse.in/pricing/?uid={encoded_uid}"
+            st.error(t["credit_exhausted"])
+            st.markdown(f"[{t['pricing_link_text']}]({pricing_url})")
+            st.stop()
+    except Exception as e:
+        st.error("⚠️ Could not verify your credit balance. Please try again in a moment.")
         st.stop()
 
     with st.spinner(t["spin"]):
         try:
-            deepseek_key = None
-            try:
-                if hasattr(st, "secrets"):
-                    deepseek_key = st.secrets.get("DEEPSEEK_API_KEY")
-            except Exception:
-                pass
-
-            if not deepseek_key:
-                deepseek_key = os.getenv("DEEPSEEK_API_KEY")
-
-            if not deepseek_key:
-                st.error("🔑 API key not found. Please add DEEPSEEK_API_KEY to your Streamlit secrets or environment variables.")
-                st.stop()
-
-            client = OpenAI(api_key=deepseek_key, base_url="https://api.deepseek.com")
-
             # --- STEP 1: GEOLOCATION & TIMEZONE ---
             result = get_location_data(city_input)
             if result is None:
@@ -1043,12 +1354,15 @@ if submit_button:
                 temperature=0.4
             )
 
-            # Only increment after a successful API response
-            st.session_state["CHART_USAGE"][chart_id] = st.session_state["CHART_USAGE"].get(chart_id, 0) + 1
+            # Only consume credit after a successful API response
+            if not _skip_credit_check():
+                consume_credit(identifier)
 
-            st.session_state["reading_ready"] = True
+            # Record the submission for IP-based rate limiting only after success.
+            _record_reading_submission(client_ip)
+
             st.session_state["ai_response"] = response.choices[0].message.content
-            log_conversation_to_make(dob_input, city_input, time_input, user_question, st.session_state["ai_response"])
+
             st.session_state["chart_string"]    = chart_string
             st.session_state["aspects_string"]  = aspects_string
             st.session_state["karaka_string"]   = karaka_string
@@ -1063,11 +1377,30 @@ if submit_button:
             st.session_state["functional_lords_string"] = functional_lords_string
             st.session_state["pd_data"] = pd_data
 
+            st.session_state["reading_ready"] = True
+
+            # Persist the reading so users can revisit it later. This is best-effort;
+            # a DB failure here should not break the UI after a successful API call.
+            try:
+                save_reading(
+                    identifier=identifier,
+                    chart_id=chart_id,
+                    question=user_question,
+                    answer=st.session_state["ai_response"],
+                    workflow=workflow_type,
+                )
+            except Exception as e:
+                import sys
+                print(f"SAVE_READING_FAILED: {e}", file=sys.stderr)
+
+            log_conversation_to_make(dob_input, city_input, time_input, user_question, st.session_state["ai_response"])
+
         except Exception as e:
             err_msg = str(e)
 
-            # Capture everything that is safe to record
+            # Capture context for crash debugging. PII is sanitized inside log_crash().
             crash_context = {
+                "identifier": identifier,
                 "dob": str(dob_input) if 'dob_input' in locals() else None,
                 "time": str(time_input) if 'time_input' in locals() else None,
                 "city": city_input if 'city_input' in locals() else None,
