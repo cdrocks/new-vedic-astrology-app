@@ -1335,6 +1335,38 @@ if submit_button:
             if sensitive_addon:
                 system_prompt += sensitive_addon
 
+            # ====================================================================
+            #  AUTOMATIC DETRIMENTAL PERIOD CHECKS
+            #  (The AI must flag these even if the user didn’t ask.)
+            # ====================================================================
+
+            # 1. Sade Sati (7.5 years) – 3 phases
+            system_prompt += "\n\n### SADE SATI CHECK (CRITICAL) ###\nSaturn's transit sign is given in the gochar data. Find the natal Moon sign (from the chart). If Saturn is transiting the sign immediately before the Moon (12th from Moon), that is the RISING phase of Sade Sati. If Saturn is in the same sign as the natal Moon (1st from Moon), that is the PEAK phase. If Saturn is in the sign after the Moon (2nd from Moon), that is the SETTING phase. You MUST explicitly state the current phase of Sade Sati and explain its heavy mental, emotional, and material pressures. Always use the term 'Sade Sati' and mention its approx. 2.5‑year per phase timeline. Offer traditional remedies (Shani mantras, Hanuman Chalisa, sesame oil donations)."
+
+            # 2. Saturn Return (~2.5 years)
+            system_prompt += "\n\n### SATURN RETURN CHECK ###\nCompare Saturn's current transit degree with the natal Saturn degree given in the chart. If the two positions are within about 5 degrees, the native is experiencing their Saturn Return. Label this event clearly and discuss its intense life‑review nature – major responsibilities, career crossroads, and long‑term maturation. Advise patience, discipline, and structured effort."
+
+            # 3. Ashtam Shani (Saturn transiting 8th from Moon) – 2.5 years
+            system_prompt += "\n\n### ASHTAM SHANI CHECK ###\nFrom the gochar data, check which house Saturn is transiting relative to the natal Moon. If it is the 8th house from the Moon, clearly name this period 'Ashtam Shani'. Describe it as a time of hidden obstacles, sudden losses, health vulnerability, and psychological transformation. Recommend Shani‑related remedies and extra caution in legal and financial matters."
+
+            # 4. Saturn transiting 12th from Moon (part of Sade Sati, but also tough on its own)
+            #    (This is already covered by the Sade Sati check, but we can reinforce it.)
+            #    Not strictly needed if Sade Sati is always flagged – but you can keep it.
+            #
+            # system_prompt += "\n\n### SATURN 12TH FROM MOON ###\nIf Saturn is transiting the 12th house from the Moon, mention that this is a period of isolation, heavy expenses, foreign travel, and spiritual introspection. Even if it is not part of Sade Sati (because Sade Sati requires three signs), highlight its draining influence."
+
+            # 5. Rahu Mahadasha / Antardasha (18 years / 2–3 years)
+            system_prompt += "\n\n### RAHU DASHA ALERT ###\nLook at the current Mahadasha and Antardasha in the dasha timeline. If the MD or AD lord is Rahu, explicitly discuss its challenging effects: illusion, sudden upheavals, foreign influences, intense desire, and unconventional life paths. Warn about chasing mirages and recommend grounding practices (meditation, charity)."
+
+            # 6. Ketu Mahadasha / Antardasha (7 years / 1–2 years)
+            system_prompt += "\n\n### KETU DASHA ALERT ###\nIf the current MD or AD lord is Ketu, label this period as a time of detachment, spiritual crisis, loss of material attachments, and sometimes sudden accidents. Advise introspection, mantra recitation, and avoiding unnecessary risks."
+
+            # 7. Saturn Mahadasha / Antardasha (19 years / 2–3 years)
+            system_prompt += "\n\n### SATURN DASHA NOTE ###\nIf the current MD or AD lord is Saturn, mention that this is a long, slow‑moving period of hard work, karmic debts, and structural change. Highlight any concurrent transits (Sade Sati, Saturn Return, Ashtam Shani) that amplify its severity. Emphasise discipline and patience."
+
+            # 8. (Optional) Mars Mahadasha – 7 years, can be aggressive if afflicted
+            system_prompt += "\n\n### MARS DASHA AWARENESS ###\nIf the MD or AD lord is Mars, discuss its energetic, sometimes aggressive influence. Especially note if Mars is afflicted in the natal chart (debilitated, combust, or in an enemy sign) – warn about conflicts, accidents, and rash decisions."
+
             # --- DEBUG: VIEW EXACT PROMPT ---
             if not is_production():
                 with st.expander("🔍 Debug — View raw prompt sent to DeepSeek"):
