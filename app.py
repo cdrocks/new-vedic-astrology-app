@@ -46,7 +46,6 @@ from engine import (
     get_combustion_status
 )
 from prompts import COMMON_RULES, WORKFLOWS, classify_workflow
-from theme import apply_theme
 
 
 # --- FREE QUESTION LIMIT SYSTEM (DB-backed) ---
@@ -467,7 +466,6 @@ def _log_safety_block(source: str, category: str):
 # 1. FRONTEND UI & TEXTS
 # ==========================================
 st.set_page_config(page_title="Vedic Astrology Reader", page_icon="🔮", layout="centered")
-apply_theme()
 
 t = {
     "title": "Vedic Astrology Reader",
