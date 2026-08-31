@@ -290,7 +290,7 @@ with col1:
         "Date of Birth",
         value=datetime(1990, 1, 1),
         min_value=datetime(1900, 1, 1),
-        max_value=datetime.now()
+        max_value=datetime(2100, 12, 31)
     )
 
     st.write("**Time of Birth (24-hour format)**")

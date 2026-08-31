@@ -786,9 +786,9 @@ col1, col2 = st.columns(2)
 with col1:
     dob_input = st.date_input(
         t["dob"],
-        value=None,
+        value=datetime(1990, 1, 1).date(),
         min_value=datetime(1900, 1, 1).date(),
-        max_value=datetime.now().date(),
+        max_value=datetime(2100, 12, 31).date(),
         format="YYYY-MM-DD",
     )
 
