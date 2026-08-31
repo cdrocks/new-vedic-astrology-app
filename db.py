@@ -50,6 +50,7 @@ def schema_sql() -> str:
     return """
     CREATE TABLE IF NOT EXISTS users (
         identifier TEXT PRIMARY KEY,
+        customer_name TEXT,
         free_credit_used BOOLEAN DEFAULT FALSE,
         credits_remaining INTEGER DEFAULT 0,
         credits_purchased_total INTEGER DEFAULT 0,
@@ -63,6 +64,8 @@ def schema_sql() -> str:
         type TEXT NOT NULL CHECK (type IN ('free_grant', 'purchase', 'consumption')),
         credits_delta INTEGER NOT NULL,
         razorpay_payment_id TEXT,
+        razorpay_order_id TEXT,
+        plan_id TEXT,
         created_at TIMESTAMP DEFAULT NOW()
     );
 
@@ -72,6 +75,7 @@ def schema_sql() -> str:
     CREATE TABLE IF NOT EXISTS pending_orders (
         order_id TEXT PRIMARY KEY,
         identifier TEXT NOT NULL,
+        customer_name TEXT,
         plan_id TEXT NOT NULL,
         credits INTEGER NOT NULL,
         status TEXT DEFAULT 'created',
@@ -94,6 +98,7 @@ def schema_sql() -> str:
     CREATE TABLE IF NOT EXISTS readings (
         id SERIAL PRIMARY KEY,
         identifier TEXT NOT NULL REFERENCES users(identifier) ON DELETE CASCADE,
+        customer_name TEXT,
         chart_id TEXT NOT NULL,
         question TEXT NOT NULL,
         answer TEXT NOT NULL,
@@ -106,6 +111,21 @@ def schema_sql() -> str:
 
     CREATE INDEX IF NOT EXISTS idx_readings_chart_id
         ON readings(chart_id);
+
+    ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS customer_name TEXT;
+
+    ALTER TABLE readings
+        ADD COLUMN IF NOT EXISTS customer_name TEXT;
+
+    ALTER TABLE credit_transactions
+        ADD COLUMN IF NOT EXISTS razorpay_order_id TEXT;
+
+    ALTER TABLE credit_transactions
+        ADD COLUMN IF NOT EXISTS plan_id TEXT;
+
+    ALTER TABLE pending_orders
+        ADD COLUMN IF NOT EXISTS customer_name TEXT;
     """
 
 
@@ -123,6 +143,14 @@ def init_db():
 def normalize_identifier(identifier: str) -> str:
     """Normalize email/phone identifiers for consistent lookup."""
     return identifier.strip().lower()
+
+
+def normalize_customer_name(customer_name: Optional[str]) -> Optional[str]:
+    """Keep names searchable while avoiding empty strings in the database."""
+    if customer_name is None:
+        return None
+    cleaned = " ".join(customer_name.strip().split())
+    return cleaned or None
 
 
 def is_valid_identifier(identifier: str) -> bool:
@@ -152,12 +180,13 @@ def now_string() -> str:
 
 # --- USER LEDGER HELPERS ---
 
-def get_or_create_user(identifier: str):
+def get_or_create_user(identifier: str, customer_name: Optional[str] = None):
     """
     Look up a user by identifier, creating a row with defaults if none exists.
     Returns a dict-like RealDictRow.
     """
     normalized = normalize_identifier(identifier)
+    normalized_name = normalize_customer_name(customer_name)
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -170,14 +199,14 @@ def get_or_create_user(identifier: str):
                 cur.execute(
                     """
                     INSERT INTO users
-                        (identifier, free_credit_used, credits_remaining,
+                        (identifier, customer_name, free_credit_used, credits_remaining,
                          credits_purchased_total, created_at, updated_at)
                     VALUES
-                        (%s, FALSE, 0, 0, NOW(), NOW())
+                        (%s, %s, FALSE, 0, 0, NOW(), NOW())
                     ON CONFLICT (identifier) DO NOTHING
                     RETURNING *
                     """,
-                    (normalized,),
+                    (normalized, normalized_name),
                 )
                 user = cur.fetchone()
                 # If another request created the row between SELECT and INSERT,
@@ -188,6 +217,18 @@ def get_or_create_user(identifier: str):
                         (normalized,),
                     )
                     user = cur.fetchone()
+            elif normalized_name and user.get("customer_name") != normalized_name:
+                cur.execute(
+                    """
+                    UPDATE users
+                    SET customer_name = %s,
+                        updated_at = NOW()
+                    WHERE identifier = %s
+                    RETURNING *
+                    """,
+                    (normalized_name, normalized),
+                )
+                user = cur.fetchone()
             conn.commit()
             return user
     finally:
@@ -197,24 +238,33 @@ def get_or_create_user(identifier: str):
 def has_available_credit(identifier: str) -> bool:
     """Return True if the user still has their free question or paid credits."""
     user = get_or_create_user(identifier)
+    if not user:
+        return False
     return (not user["free_credit_used"]) or (user["credits_remaining"] > 0)
 
 
-def create_pending_order(order_id: str, identifier: str, plan_id: str, credits: int):
+def create_pending_order(
+    order_id: str,
+    identifier: str,
+    plan_id: str,
+    credits: int,
+    customer_name: Optional[str] = None,
+):
     """Record a Razorpay order that has been created but not yet paid."""
     normalized = normalize_identifier(identifier)
+    normalized_name = normalize_customer_name(customer_name)
     conn = get_connection()
     try:
         with conn.cursor() as cur:
             cur.execute(
                 """
                 INSERT INTO pending_orders
-                    (order_id, identifier, plan_id, credits, status, created_at)
+                    (order_id, identifier, customer_name, plan_id, credits, status, created_at)
                 VALUES
-                    (%s, %s, %s, %s, 'created', NOW())
+                    (%s, %s, %s, %s, %s, 'created', NOW())
                 ON CONFLICT (order_id) DO NOTHING
                 """,
-                (order_id, normalized, plan_id, credits),
+                (order_id, normalized, normalized_name, plan_id, credits),
             )
             conn.commit()
     finally:
@@ -262,7 +312,8 @@ def count_recent_events(key: str, event_type: str, window_seconds: int) -> int:
                 """,
                 (key, event_type, window_seconds),
             )
-            return cur.fetchone()[0]
+            row = cur.fetchone()
+            return row[0] if row else 0
     finally:
         conn.close()
 
@@ -335,6 +386,8 @@ def grant_purchase_credits(
                     (normalized,),
                 )
                 user = cur.fetchone()
+            if not user:
+                raise RuntimeError("User record not found in record_purchase")
 
             # Idempotency check inside the transaction as well.
             cur.execute(
@@ -348,6 +401,28 @@ def grant_purchase_credits(
             new_remaining = user["credits_remaining"] + credits
             new_purchased = user["credits_purchased_total"] + credits
             cur.execute(
+                "SELECT plan_id, customer_name FROM pending_orders WHERE order_id = %s",
+                (order_id,),
+            )
+            pending_order = cur.fetchone()
+            plan_id = pending_order["plan_id"] if pending_order else None
+            order_customer_name = (
+                normalize_customer_name(pending_order["customer_name"])
+                if pending_order
+                else None
+            )
+            if order_customer_name and user.get("customer_name") != order_customer_name:
+                cur.execute(
+                    """
+                    UPDATE users
+                    SET customer_name = %s,
+                        updated_at = NOW()
+                    WHERE identifier = %s
+                    """,
+                    (order_customer_name, normalized),
+                )
+
+            cur.execute(
                 """
                 UPDATE users
                 SET credits_remaining = %s,
@@ -360,11 +435,12 @@ def grant_purchase_credits(
             cur.execute(
                 """
                 INSERT INTO credit_transactions
-                    (identifier, type, credits_delta, razorpay_payment_id)
+                    (identifier, type, credits_delta, razorpay_payment_id,
+                     razorpay_order_id, plan_id)
                 VALUES
-                    (%s, 'purchase', %s, %s)
+                    (%s, 'purchase', %s, %s, %s, %s)
                 """,
-                (normalized, credits, razorpay_payment_id),
+                (normalized, credits, razorpay_payment_id, order_id, plan_id),
             )
             cur.execute(
                 """
@@ -419,6 +495,8 @@ def consume_credit(identifier: str) -> dict:
                     (normalized,),
                 )
                 user = cur.fetchone()
+            if not user:
+                raise RuntimeError("User record not found in consume_credit")
 
             if not user["free_credit_used"]:
                 cur.execute(
@@ -470,6 +548,130 @@ def consume_credit(identifier: str) -> dict:
 
             conn.commit()
             return result
+    finally:
+        conn.close()
+
+
+def consume_credit_and_save_reading(
+    identifier: str,
+    chart_id: str,
+    question: str,
+    answer: str,
+    workflow: Optional[str] = None,
+    customer_name: Optional[str] = None,
+) -> dict:
+    """
+    Atomically consume one available credit and persist the completed reading.
+
+    This keeps support/refund records consistent: if the transaction commits, the
+    user was charged and the answer is stored; if anything fails, neither happens.
+    """
+    if not identifier or not chart_id or not question or not answer:
+        return {"ok": False, "error": "Missing required reading fields"}
+
+    normalized = normalize_identifier(identifier)
+    normalized_name = normalize_customer_name(customer_name)
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                "SELECT * FROM users WHERE identifier = %s FOR UPDATE",
+                (normalized,),
+            )
+            user = cur.fetchone()
+
+            if user is None:
+                cur.execute(
+                    """
+                    INSERT INTO users
+                        (identifier, customer_name, free_credit_used, credits_remaining,
+                         credits_purchased_total, created_at, updated_at)
+                    VALUES
+                        (%s, %s, FALSE, 0, 0, NOW(), NOW())
+                    RETURNING *
+                    """,
+                    (normalized, normalized_name),
+                )
+                user = cur.fetchone()
+            elif normalized_name and user.get("customer_name") != normalized_name:
+                cur.execute(
+                    """
+                    UPDATE users
+                    SET customer_name = %s,
+                        updated_at = NOW()
+                    WHERE identifier = %s
+                    RETURNING *
+                    """,
+                    (normalized_name, normalized),
+                )
+                user = cur.fetchone()
+            if not user:
+                raise RuntimeError("User record not found in consume_credit_and_save_reading")
+
+            if not user["free_credit_used"]:
+                cur.execute(
+                    """
+                    UPDATE users
+                    SET free_credit_used = TRUE,
+                        updated_at = NOW()
+                    WHERE identifier = %s
+                    """,
+                    (normalized,),
+                )
+                cur.execute(
+                    """
+                    INSERT INTO credit_transactions
+                        (identifier, type, credits_delta, razorpay_payment_id)
+                    VALUES
+                        (%s, 'consumption', 0, NULL)
+                    """,
+                    (normalized,),
+                )
+                credit_result = {
+                    "used_free": True,
+                    "credits_remaining": user["credits_remaining"],
+                }
+            elif user["credits_remaining"] > 0:
+                new_balance = user["credits_remaining"] - 1
+                cur.execute(
+                    """
+                    UPDATE users
+                    SET credits_remaining = %s,
+                        updated_at = NOW()
+                    WHERE identifier = %s
+                    """,
+                    (new_balance, normalized),
+                )
+                cur.execute(
+                    """
+                    INSERT INTO credit_transactions
+                        (identifier, type, credits_delta, razorpay_payment_id)
+                    VALUES
+                        (%s, 'consumption', -1, NULL)
+                    """,
+                    (normalized,),
+                )
+                credit_result = {"used_free": False, "credits_remaining": new_balance}
+            else:
+                conn.rollback()
+                return {"ok": False, "error": "No available credit"}
+
+            cur.execute(
+                """
+                INSERT INTO readings
+                    (identifier, customer_name, chart_id, question, answer, workflow, created_at)
+                VALUES
+                    (%s, %s, %s, %s, %s, %s, NOW())
+                RETURNING *
+                """,
+                (normalized, normalized_name, chart_id, question, answer, workflow),
+            )
+            reading = cur.fetchone()
+            conn.commit()
+            return {"ok": True, "credit": credit_result, "reading": reading}
+    except Exception as exc:
+        conn.rollback()
+        return {"ok": False, "error": str(exc)}
     finally:
         conn.close()
 
@@ -547,7 +749,14 @@ def deduct_paid_credit(email: str) -> bool:
 
 # --- READING HISTORY HELPERS ---
 
-def save_reading(identifier: str, chart_id: str, question: str, answer: str, workflow: Optional[str] = None) -> dict:
+def save_reading(
+    identifier: str,
+    chart_id: str,
+    question: str,
+    answer: str,
+    workflow: Optional[str] = None,
+    customer_name: Optional[str] = None,
+) -> dict:
     """
     Persist a completed reading. Returns the created row as a dict.
     Does not raise on DB failure; returns {"ok": False, "error": ...} so the
@@ -557,26 +766,51 @@ def save_reading(identifier: str, chart_id: str, question: str, answer: str, wor
         return {"ok": False, "error": "Missing required reading fields"}
 
     normalized = normalize_identifier(identifier)
-    conn = get_connection()
+    normalized_name = normalize_customer_name(customer_name)
+    try:
+        conn = get_connection()
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
                 """
-                INSERT INTO readings
-                    (identifier, chart_id, question, answer, workflow, created_at)
+                INSERT INTO users
+                    (identifier, customer_name, free_credit_used, credits_remaining,
+                     credits_purchased_total, created_at, updated_at)
                 VALUES
-                    (%s, %s, %s, %s, %s, NOW())
+                    (%s, %s, FALSE, 0, 0, NOW(), NOW())
+                ON CONFLICT (identifier) DO UPDATE
+                SET customer_name = COALESCE(EXCLUDED.customer_name, users.customer_name),
+                    updated_at = NOW()
+                """,
+                (normalized, normalized_name),
+            )
+            cur.execute(
+                """
+                INSERT INTO readings
+                    (identifier, customer_name, chart_id, question, answer, workflow, created_at)
+                VALUES
+                    (%s, %s, %s, %s, %s, %s, NOW())
                 RETURNING *
                 """,
-                (normalized, chart_id, question, answer, workflow),
+                (normalized, normalized_name, chart_id, question, answer, workflow),
             )
             row = cur.fetchone()
             conn.commit()
             return {"ok": True, "reading": row}
     except Exception as exc:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
         return {"ok": False, "error": str(exc)}
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 def get_readings(identifier: str, limit: int = 50, offset: int = 0):

@@ -25,7 +25,7 @@ def _hash_identifier(value: str) -> str:
     return hashlib.sha256(value.lower().strip().encode("utf-8")).hexdigest()[:16]
 
 
-def _sanitize_dob(dob) -> str:
+def _sanitize_dob(dob) -> str | None:
     """Keep only the year from a date string/object to reduce PII."""
     if dob is None:
         return None
@@ -37,7 +37,7 @@ def _sanitize_dob(dob) -> str:
         return "[redacted]"
 
 
-def _sanitize_question(question: str) -> str:
+def _sanitize_question(question: str) -> str | None:
     """Truncate question text so logs don't store full user queries."""
     if not question:
         return None
@@ -126,7 +126,7 @@ def diagnose():
     else:
         results.append(("workflows/ folder", True, "Found"))
         required = [
-            "common","career","wealth","marriage",
+            "common","career","generic_career","luck","wealth","marriage",
             "relationships","health","children","foreign","legal","general"
         ]
         for name in required:

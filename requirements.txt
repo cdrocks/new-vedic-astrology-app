@@ -9,4 +9,4 @@ fastapi
 uvicorn
 pydantic
 razorpay
-itsdangerous
+itsdangerous¯

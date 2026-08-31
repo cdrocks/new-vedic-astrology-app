@@ -21,7 +21,7 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, Any
 
 import razorpay
 from fastapi import FastAPI, HTTPException, Header, Request
@@ -119,7 +119,7 @@ def _record_order_request(key: str, event_type: str):
         pass
 
 
-def _get_razorpay_client() -> razorpay.Client:
+def _get_razorpay_client() -> Any:
     if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
         raise HTTPException(
             status_code=500,
@@ -160,6 +160,7 @@ app.add_middleware(
 class CreateOrderRequest(BaseModel):
     plan_id: str = Field(..., min_length=1)
     identifier: str = Field(..., min_length=1)
+    customer_name: Optional[str] = None
 
 
 class CreateOrderResponse(BaseModel):
@@ -198,6 +199,7 @@ def create_order(payload: CreateOrderRequest, request: Request):
 
     # 2. Validate identifier
     identifier = payload.identifier.strip()
+    customer_name = " ".join((payload.customer_name or "").strip().split()) or None
     if not identifier or not is_valid_identifier(identifier):
         raise HTTPException(
             status_code=400, detail="Invalid identifier. Provide a valid email or phone number."
@@ -232,6 +234,7 @@ def create_order(payload: CreateOrderRequest, request: Request):
                 "currency": "INR",
                 "notes": {
                     "identifier": identifier,
+                    "customer_name": customer_name or "",
                     "plan_id": payload.plan_id,
                 },
             }
@@ -251,7 +254,13 @@ def create_order(payload: CreateOrderRequest, request: Request):
 
     # 5. Persist pending order so the webhook can credit the user later
     try:
-        create_pending_order(order_id, identifier, payload.plan_id, credits)
+        create_pending_order(
+            order_id,
+            identifier,
+            payload.plan_id,
+            credits,
+            customer_name=customer_name,
+        )
     except Exception:
         # If DB write fails, do not leak the Razorpay order to the user because
         # the webhook would not be able to fulfill it. Surface a generic error.

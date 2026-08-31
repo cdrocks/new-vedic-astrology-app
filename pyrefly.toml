@@ -1,0 +1,13 @@
+project-includes = [
+    "*.py",
+    "tests/*.py",
+]
+
+project-excludes = [
+    ".venv/**",
+    ".git/**",
+    ".pytest_cache/**",
+]
+
+python-interpreter-path = ".venv/bin/python"
+ignore-missing-imports = ["swisseph", "pytest"]

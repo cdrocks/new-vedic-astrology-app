@@ -1,0 +1,22 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment and IDE
+.venv/
+venv/
+.env
+.DS_Store
+.pytest_cache/
+.serena/
+
+# Debug logs
+debug_logs/
+
+# Streamlit secrets
+.streamlit/
+*.toml
+!pyrefly.toml
+!mise.toml
+!nixpacks.toml

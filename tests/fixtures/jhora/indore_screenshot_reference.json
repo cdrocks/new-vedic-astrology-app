@@ -1,0 +1,47 @@
+{
+  "id": "indore_jhora_screenshot",
+  "source": "Jagannatha Hora screenshots supplied 2026-08-25",
+  "settings": {
+    "ayanamsa": "Lahiri (Chitra Paksha)",
+    "house_system": "whole sign",
+    "birth_local": "1981-02-09 08:21:55 Asia/Kolkata",
+    "latitude": 22.7166667,
+    "longitude": 75.8333333
+  },
+  "longitudes": {
+    "Ascendant": 320.4492917,
+    "Sun": 296.7076500,
+    "Moon": 351.8899528,
+    "Mars": 308.1520361,
+    "Mercury": 311.3165833,
+    "Jupiter": 166.4407528,
+    "Venus": 282.5245833,
+    "Saturn": 165.8024778,
+    "Rahu": 106.8680472,
+    "Ketu": 286.8680472
+  },
+  "sav_by_house": [26, 22, 30, 29, 27, 36, 23, 22, 24, 38, 35, 25],
+  "shadbala": {
+    "Sun": {"virupas": 335.88, "rupas": 5.60, "percent": 111.96},
+    "Moon": {"virupas": 434.75, "rupas": 7.25, "percent": 120.76},
+    "Mars": {"virupas": 393.68, "rupas": 6.56, "percent": 131.23},
+    "Mercury": {"virupas": 514.78, "rupas": 8.58, "percent": 122.57},
+    "Jupiter": {"virupas": 330.62, "rupas": 5.51, "percent": 84.77},
+    "Venus": {"virupas": 317.04, "rupas": 5.28, "percent": 96.07},
+    "Saturn": {"virupas": 409.72, "rupas": 6.83, "percent": 136.57}
+  },
+  "bhava_bala": {
+    "1": {"lord": "Saturn", "virupas": 476.41, "rupas": 7.94},
+    "2": {"lord": "Jupiter", "virupas": 419.98, "rupas": 7.00},
+    "3": {"lord": "Mars", "virupas": 456.36, "rupas": 7.61},
+    "4": {"lord": "Venus", "virupas": 384.54, "rupas": 6.41},
+    "5": {"lord": "Mercury", "virupas": 543.05, "rupas": 9.05},
+    "6": {"lord": "Moon", "virupas": 481.33, "rupas": 8.02},
+    "7": {"lord": "Sun", "virupas": 404.18, "rupas": 6.74},
+    "8": {"lord": "Mercury", "virupas": 537.24, "rupas": 8.95},
+    "9": {"lord": "Venus", "virupas": 342.99, "rupas": 5.72},
+    "10": {"lord": "Mars", "virupas": 428.03, "rupas": 7.13},
+    "11": {"lord": "Jupiter", "virupas": 413.02, "rupas": 6.88},
+    "12": {"lord": "Saturn", "virupas": 475.19, "rupas": 7.92}
+  }
+}
