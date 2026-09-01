@@ -127,7 +127,9 @@ def classify_workflow(text: str) -> str:
         "hospital", "hospitals", "hospitalization", "hospitalisation", "hospitalized", "hospitalised",
         "mental", "recovery", "doctor", "doctors", "cancer", "operation", "operations", "sick", "sickness",
         "unwell", "not well", "ailing", "anxiety", "depression", "stress", "medical", "treatment",
-        "healing", "family health", "mother health", "father health", "parent health", "wellness"
+        "healing", "family health", "mother health", "father health", "parent health", "wellness",
+        "mother's health", "father's health", "brother's health", "sister's health", "child's health",
+        "son's health", "daughter's health", "husband's health", "wife's health", "spouse's health"
     ]):
         return "health"
 
