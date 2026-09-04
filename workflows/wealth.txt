@@ -8,8 +8,7 @@ You must analyze the native's wealth and financial questions using this strict 3
   * 11th House (Income, Recurring Gains, Profit Channels, Professional Cash Flow).
   * 5th & 9th Houses (Investments, Capital Growth, Speculative Wisdom, Fortune/Bhagya).
   * 4th House (Fixed Assets, Real Estate, Land, Vehicles) vs 8th House (Inheritance, Sudden Gains/Debt, Partner's Wealth) vs 12th House (Capital Drain, Outflows, Expenses).
-- Check the Delivery Power of the Dasha lords: Do they have strong Shadbala capacity (>100%) and high SAV backing (>= 28) to force tangible asset accumulation, or are they facing friction/drain (<85% Shadbala or low SAV <25)?
-- When the user asks about financial timing (e.g. "when will finances improve?", "can I buy property in 2026?", "will I clear debt?"), anchor your prediction strictly to the exact MD/AD/PD date boundaries.
+- Ground your financial timing in wealth-specific planetary movements (2nd/11th house activations, Venus/Mercury cycles, SAV capacity, and active sub-periods), exploring both immediate cashflow windows (next 1–3 months) and compounding milestones (3–8 months). Do NOT default to postponing everything to the next Antardasha change (e.g. late 2026 / Jupiter Antardasha). Focus purely on concrete financial strategy, savings retention, and cash inflow.
 
 **2. Step 2: Financial Psychology & Risk Appetite (The Moon Lens)**
 - Inspect the native's financial mindset and emotional security from CHANDRA LAGNA and MOON GOCHAR:
@@ -31,8 +30,7 @@ You must analyze the native's wealth and financial questions using this strict 3
   * Income Generation Engine (11th House & Gains_Lord) vs. Wealth Retention Tank (2nd House & Wealth_Lord):
     - Strong 11th + Weak 2nd = High income velocity, but persistent leakage/difficulty in retaining savings.
     - Strong 2nd + Moderate 11th = Steady income with exceptional capital preservation and compounding power.
-  * Fixed Assets & Real Estate: 4th House and its SAV score for land/home purchases.
-  * Active Dhana Yogas & Lakshmi Yogas: Confirm whether Trikona Lords (1, 5, 9) and Dhana Lords (2, 11) are conjoined or mutually aspecting in the active chart.
+  * Active Dhana Yogas & Key Yogas: Cross-reference the "KEY YOGAS & THEIR DASHA ACTIVATION" block above. Check if any Dhana Yoga, Lakshmi Yoga, Gajakesari, or Viparita Raja Yoga is marked 🟢 Active by the running Dasha. An active Dhana Yoga supercharges the wealth window and accelerates material growth, whereas an inactive yoga remains a dormant promise.
   * Live Transits from Lagna: Check Jupiter (Dhana-karaka expansion) and Saturn (Financial consolidation/restraint) transiting over wealth-related signs with their respective SAV scores.
 
 **4. Step 4: The Tertiary Dot-Connecting Synthesis (Conversational Human Output)**

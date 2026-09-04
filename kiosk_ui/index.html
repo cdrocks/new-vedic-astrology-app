@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Vedic Astrology Reader</title>
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="/static/style.css?v=10" />
+
+  <!-- Three.js & GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <!-- Marked for markdown reading render -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+  <!-- WebGL 3D Solar System Canvas -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- Ambient Glow Overlay -->
+  <div class="cosmic-overlay"></div>
+
+  <!-- MAIN APP CONTAINER -->
+  <div class="kiosk-container">
+
+    <!-- HEADER / BRANDING -->
+    <header class="kiosk-header">
+      <div class="brand-badge">✦ VEDIC ASTROLOGY READER ✦</div>
+      <h1 class="brand-title">Your Janam Kundali and Life Path</h1>
+      <p class="brand-subtitle">Accurate Vedic insights into your career, wealth, and life timing</p>
+    </header>
+
+    <!-- ==========================================
+         SCREEN 1: TOPIC SELECTION & BIRTH DETAILS
+         ========================================== -->
+    <section id="screen-input" class="kiosk-screen active">
+      
+      <!-- STEP 1: CHOOSE A FOCUS AREA -->
+      <div class="step-card">
+        <div class="step-label"><span>STEP 1</span> Choose What You Want to Know</div>
+        
+        <div class="topics-grid" id="topics-grid">
+          
+          <div class="topic-card active" data-topic="career" data-prompt="Based on my planetary strengths and current Dasha, what leadership qualities and professional milestones are opening up for me?">
+            <div class="topic-badge">
+              <svg class="topic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/>
+                <circle cx="12" cy="12" r="2.5"/>
+              </svg>
+            </div>
+            <div class="topic-info">
+              <h3>Career</h3>
+              <p>Professional rise, leadership and timing</p>
+            </div>
+          </div>
+
+          <div class="topic-card" data-topic="superpowers" data-prompt="Based on my planetary strengths and 9th/5th house grace, what dormant gifts, superpowers, and fortunate opportunities are opening up for me?">
+            <div class="topic-badge">
+              <svg class="topic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+            </div>
+            <div class="topic-info">
+              <h3>Hidden Gifts and Opportunities</h3>
+              <p>Dormant talents, unique edge and lucky openings</p>
+            </div>
+          </div>
+
+          <div class="topic-card" data-topic="wealth" data-prompt="Where does my chart indicate my greatest avenues for financial prosperity, abundance, and creative growth?">
+            <div class="topic-badge">
+              <svg class="topic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 3h12l4 6-10 12L2 9z"/>
+                <path d="M2 9h20"/>
+                <path d="M10 3l-2 6 4 12 4-12-2-6"/>
+              </svg>
+            </div>
+            <div class="topic-info">
+              <h3>Wealth</h3>
+              <p>Financial growth, income streams and assets</p>
+            </div>
+          </div>
+
+          <div class="topic-card" data-topic="relationships" data-prompt="What does my chart illuminate about my relationship dynamics, social rapport, and meaningful connections?">
+            <div class="topic-badge">
+              <svg class="topic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+            </div>
+            <div class="topic-info">
+              <h3>Relationships</h3>
+              <p>Meaningful connections, rapport and harmony</p>
+            </div>
+          </div>
+
+          <div class="topic-card" data-topic="purpose" data-prompt="What is my soul's highest calling, Atmakaraka mission, and unique contribution in this lifetime?">
+            <div class="topic-badge">
+              <svg class="topic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/>
+                <circle cx="12" cy="12" r="3.5"/>
+                <line x1="12" y1="3" x2="12" y2="6"/>
+                <line x1="12" y1="18" x2="12" y2="21"/>
+                <line x1="3" y1="12" x2="6" y2="12"/>
+                <line x1="18" y1="12" x2="21" y2="12"/>
+              </svg>
+            </div>
+            <div class="topic-info">
+              <h3>Soul Purpose</h3>
+              <p>Higher calling, dharma and life mission</p>
+            </div>
+          </div>
+
+          <div class="topic-card" data-topic="mindset" data-prompt="Based on my Moon sign and planetary placements, what daily practices will align me with peak mental flow, clarity, and vitality?">
+            <div class="topic-badge">
+              <svg class="topic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4.5"/>
+                <line x1="12" y1="2" x2="12" y2="4.5"/>
+                <line x1="12" y1="19.5" x2="12" y2="22"/>
+                <line x1="4.93" y1="4.93" x2="6.7" y2="6.7"/>
+                <line x1="17.3" y1="17.3" x2="19.07" y2="19.07"/>
+                <line x1="2" y1="12" x2="4.5" y2="12"/>
+                <line x1="19.5" y1="12" x2="22" y2="12"/>
+                <line x1="4.93" y1="19.07" x2="6.7" y2="17.3"/>
+                <line x1="17.3" y1="6.7" x2="19.07" y2="4.93"/>
+              </svg>
+            </div>
+            <div class="topic-info">
+              <h3>Health</h3>
+              <p>Vitality, mental calm and physical well-being</p>
+            </div>
+          </div>
+
+          <div class="topic-card" data-topic="year_ahead" data-prompt="What dynamic opportunities and planetary transits will influence my journey over the next 12 months?">
+            <div class="topic-badge">
+              <svg class="topic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 22h14"/>
+                <path d="M5 2h14"/>
+                <path d="M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22"/>
+                <path d="M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/>
+              </svg>
+            </div>
+            <div class="topic-info">
+              <h3>The Year Ahead</h3>
+              <p>Major opportunities and 12-month transits</p>
+            </div>
+          </div>
+
+          <div class="topic-card custom-card" data-topic="custom" data-prompt="">
+            <div class="topic-badge">
+              <svg class="topic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9"/>
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+              </svg>
+            </div>
+            <div class="topic-info">
+              <h3>Custom Question</h3>
+              <p>Ask anything specific on your mind</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Custom Question Box (Expands when Custom card is clicked) -->
+        <div id="custom-question-container" class="custom-input-box" style="display: none;">
+          <label for="custom-question-input">Your Question:</label>
+          <textarea id="custom-question-input" rows="3" placeholder="e.g., What is the most auspicious direction for my career growth this year?"></textarea>
+        </div>
+
+      </div>
+
+      <!-- STEP 2: BIRTH DETAILS FORM -->
+      <div class="step-card">
+        <div class="step-label"><span>STEP 2</span> Enter Your Birth Details</div>
+
+        <form id="kiosk-form" onsubmit="event.preventDefault(); handleFormSubmit();">
+          <div class="form-grid">
+            
+            <!-- Full Name -->
+            <div class="input-group">
+              <label for="guest-name">Your Full Name <span class="req">*</span></label>
+              <input type="text" id="guest-name" required placeholder="e.g., Aryan Sharma" />
+            </div>
+
+            <!-- Date of Birth -->
+            <div class="input-group">
+              <label for="guest-dob">Date of Birth <span class="req">*</span></label>
+              <input type="date" id="guest-dob" required value="1995-05-15" />
+            </div>
+
+            <!-- Time of Birth -->
+            <div class="input-group">
+              <label for="guest-time">Time of Birth (24h) <span class="req">*</span></label>
+              <input type="time" id="guest-time" required value="10:30" />
+            </div>
+
+            <!-- City of Birth -->
+            <div class="input-group">
+              <label for="guest-city">Birth City / Town <span class="req">*</span></label>
+              <input type="text" id="guest-city" required placeholder="e.g., Mumbai, Delhi, Bengaluru, London" />
+            </div>
+
+            <!-- Country -->
+            <div class="input-group">
+              <label for="guest-country">Country <span class="req">*</span></label>
+              <select id="guest-country">
+                <option value="India" selected>India</option>
+                <option value="United States">United States</option>
+                <option value="United Kingdom">United Kingdom</option>
+                <option value="United Arab Emirates">United Arab Emirates</option>
+                <option value="Singapore">Singapore</option>
+                <option value="Canada">Canada</option>
+                <option value="Australia">Australia</option>
+                <option value="Germany">Germany</option>
+                <option value="France">France</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <!-- Email (Optional for Keepsake) -->
+            <div class="input-group">
+              <label for="guest-email">Email Address <span class="opt">(Optional - to receive a copy)</span></label>
+              <input type="email" id="guest-email" placeholder="e.g., aryan@example.com" />
+            </div>
+
+          </div>
+
+          <!-- Error Alert Banner -->
+          <div id="error-banner" class="error-banner" style="display: none;"></div>
+
+          <!-- SUBMIT CTA BUTTON -->
+          <div class="submit-wrap">
+            <button type="submit" id="btn-submit" class="btn-cosmic">
+              <span class="btn-text">Unlock My Kundali Insights</span>
+              <svg class="btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+    </section>
+
+    <!-- ==========================================
+         SCREEN 2: COSMIC READING & REVEAL
+         ========================================== -->
+    <section id="screen-reading" class="kiosk-screen">
+      
+      <!-- LOADING STATE (Planetary Alignment Animation) -->
+      <div id="reading-loader" class="reading-loader">
+        <div class="celestial-spinner">
+          <div class="sun-core"></div>
+          
+          <!-- Orbit 1: Mercury (Budha) -->
+          <div class="orbit-track track-1">
+            <div class="graha graha-mercury"></div>
+          </div>
+          
+          <!-- Orbit 2: Venus (Shukra) -->
+          <div class="orbit-track track-2">
+            <div class="graha graha-venus"></div>
+          </div>
+          
+          <!-- Orbit 3: Earth & Moon (Chandra) -->
+          <div class="orbit-track track-3">
+            <div class="graha graha-earth">
+              <div class="sub-moon"></div>
+            </div>
+          </div>
+          
+          <!-- Orbit 4: Mars (Mangala) -->
+          <div class="orbit-track track-4">
+            <div class="graha graha-mars"></div>
+          </div>
+          
+          <!-- Orbit 5: Jupiter (Guru) -->
+          <div class="orbit-track track-5">
+            <div class="graha graha-jupiter"></div>
+          </div>
+          
+          <!-- Orbit 6: Saturn (Shani) -->
+          <div class="orbit-track track-6">
+            <div class="graha graha-saturn">
+              <div class="mini-ring"></div>
+            </div>
+          </div>
+        </div>
+        <h2 id="loader-status" class="loader-title">Calculating Your Janam Kundali...</h2>
+        <p class="loader-sub">Aligning your Lagna, Chandra Rashi, and running Dasha periods</p>
+      </div>
+
+      <!-- COMPLETED READING CONTENT -->
+      <div id="reading-content" class="reading-result-box" style="display: none;">
+        
+        <!-- TOP HIGHLIGHTS BADGES & HEADER -->
+        <div class="guest-hero">
+          <div class="guest-hero-header">
+            <div class="guest-greeting">Kundali Insights for <span id="res-guest-name">You</span></div>
+            <button class="btn-top-reset" onclick="resetToWelcomeScreen();" title="Return to start a new reading">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              <span>Start New Reading</span>
+            </button>
+          </div>
+          <div class="badges-row">
+            <div class="cosmic-badge">
+              <span class="badge-lbl">Lagna (Rising Sign)</span>
+              <span id="res-asc" class="badge-val">Leo</span>
+            </div>
+            <div class="cosmic-badge">
+              <span class="badge-lbl">Moon Sign (Rashi)</span>
+              <span id="res-moon" class="badge-val">Cancer (Pushya)</span>
+            </div>
+            <div class="cosmic-badge">
+              <span class="badge-lbl">Life Purpose Planet (Atmakaraka)</span>
+              <span id="res-ak" class="badge-val">Jupiter</span>
+            </div>
+            <div class="cosmic-badge">
+              <span class="badge-lbl">Current Life Phase (Dasha)</span>
+              <span id="res-dasha" class="badge-val">Jupiter - Venus</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- THE AI READING TEXT -->
+        <div class="reading-scroll-pane">
+          <div id="res-reading-text" class="reading-markdown"></div>
+        </div>
+
+        <!-- ACTION BAR -->
+        <div class="kiosk-bottom-bar">
+          <button id="btn-new-reading" class="btn-reset" onclick="resetToWelcomeScreen();">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+              <path d="M21 3v5h-5"/>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+              <path d="M8 16H3v5"/>
+            </svg>
+            <span>Start New Reading (Next Guest)</span>
+          </button>
+          
+          <div class="idle-timer" id="idle-timer-box">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Auto-resetting in <span id="countdown-num">180</span>s
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- SCRIPT -->
+  <script src="/static/app.js?v=10"></script>
+</body>
+</html>

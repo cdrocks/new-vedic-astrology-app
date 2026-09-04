@@ -14,6 +14,10 @@ venv/
 # Debug logs
 debug_logs/
 
+# Leads & runtime event data
+event_leads.csv
+event_leads.jsonl
+
 # Streamlit secrets
 .streamlit/
 *.toml

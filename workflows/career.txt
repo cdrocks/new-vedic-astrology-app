@@ -4,8 +4,7 @@ You must analyze the native's career question using this strict 3-dimensional se
 **1. Step 1: Active Cosmic Clock (Vimshottari Dasha — The Timing Window)**
 - Identify the running Mahadasha (MD), Antardasha (AD), and Pratyantardasha (PD) from the Dasha Timeline.
 - Check which houses the running Dasha lords own and occupy in D1 (especially 10th Career, 2nd Wealth, 6th Daily Work, 11th Gains).
-- Check the Delivery Power of the Dasha lords: Do they have strong Shadbala capacity (>100%) and SAV backing (>= 28) to force positive outcomes, or are they facing friction?
-- When the user asks about a timeframe (e.g., "2026", "next 6 months", "when will I change jobs?"), anchor your prediction strictly to the exact MD/AD/PD date boundaries.
+- Ground your timing in career-specific planetary movements (10th/6th house transits, Sun/Mars energy shifts, and active sub-periods), exploring both immediate windows (next 1–3 months) and mid-term professional shifts (3–8 months). Do NOT default to postponing everything to the next Antardasha change (e.g. late 2026 / Jupiter Antardasha). Focus purely on workplace authority, professional skill leverage, and leadership momentum.
 
 **2. Step 2: Mental Drive & Psychological Readiness (The Moon Lens)**
 - Inspect the native's psychological state and emotional drive from CHANDRA LAGNA and MOON GOCHAR:
