@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- CSS Stylesheet -->
-  <link rel="stylesheet" href="/static/style.css?v=11" />
+  <link rel="stylesheet" href="/static/style.css?v=12" />
 
   <!-- Three.js & GSAP -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -44,7 +44,10 @@
       
       <!-- STEP 1: CHOOSE A FOCUS AREA -->
       <div class="step-card">
-        <div class="step-label"><span>STEP 1</span> Choose What You Want to Know</div>
+        <div class="step-label">
+          <span class="step-badge">STEP 1</span>
+          <span class="step-title">Choose What You Want to Know</span>
+        </div>
         
         <div class="topics-grid" id="topics-grid">
           
@@ -176,7 +179,10 @@
 
       <!-- STEP 2: BIRTH DETAILS FORM -->
       <div class="step-card">
-        <div class="step-label"><span>STEP 2</span> Enter Your Birth Details</div>
+        <div class="step-label">
+          <span class="step-badge">STEP 2</span>
+          <span class="step-title">Enter Your Birth Details</span>
+        </div>
 
         <form id="kiosk-form" onsubmit="event.preventDefault(); handleFormSubmit();">
           <div class="form-grid">
@@ -359,6 +365,6 @@
   </div>
 
   <!-- SCRIPT -->
-  <script src="/static/app.js?v=11"></script>
+  <script src="/static/app.js?v=12"></script>
 </body>
 </html>

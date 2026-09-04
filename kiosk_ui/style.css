@@ -137,33 +137,51 @@ body {
 
 .step-label {
   font-family: var(--font-sans);
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  color: #f0f0f8;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
 }
 
-.step-label span {
-  font-size: 0.72rem;
+.step-label .step-badge,
+.step-label span:first-child {
+  font-size: 0.82rem;
   font-family: var(--font-sans);
-  font-weight: 700;
-  letter-spacing: 1.5px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
   text-transform: uppercase;
-  background: rgba(243, 198, 111, 0.12);
-  border: 1px solid rgba(243, 198, 111, 0.35);
+  background: linear-gradient(135deg, rgba(243, 198, 111, 0.2), rgba(243, 198, 111, 0.08));
+  border: 1px solid rgba(243, 198, 111, 0.45);
   color: var(--accent-gold);
-  padding: 4px 12px;
+  padding: 6px 16px;
   border-radius: 20px;
   white-space: nowrap;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.step-label .step-title {
+  font-size: 1.22rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: #f0f0f8;
+  line-height: 1.35;
+}
+
+@media (min-width: 640px) {
+  .step-label {
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .step-label .step-title {
+    font-size: 1.25rem;
+  }
 }
 
 /* --- Topics Grid --- */
@@ -888,8 +906,9 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 @media (max-width: 768px) {
   .brand-title { font-size: 1.8rem; }
   .brand-subtitle { font-size: 0.95rem; white-space: normal; }
-  .step-label { font-size: 1.05rem; gap: 8px 10px; margin-bottom: 14px; }
-  .step-label span { font-size: 0.68rem; padding: 4px 10px; }
+  .step-label { margin-bottom: 16px; gap: 8px; }
+  .step-label .step-badge, .step-label span:first-child { font-size: 0.78rem; padding: 5px 14px; letter-spacing: 1.6px; }
+  .step-label .step-title { font-size: 1.15rem; }
   .topics-grid { grid-template-columns: 1fr; }
   .form-grid { grid-template-columns: 1fr; }
   .btn-cosmic { width: 100%; justify-content: center; }
@@ -902,8 +921,9 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 }
 
 @media (max-width: 480px) {
-  .step-label { font-size: 0.98rem; }
-  .step-label span { font-size: 0.65rem; padding: 3px 9px; }
+  .step-label { margin-bottom: 14px; gap: 7px; }
+  .step-label .step-badge, .step-label span:first-child { font-size: 0.75rem; padding: 5px 13px; letter-spacing: 1.5px; }
+  .step-label .step-title { font-size: 1.08rem; }
   .celestial-spinner { transform: scale(0.7); margin-bottom: 5px; }
   .badges-row { grid-template-columns: 1fr; }
 }
