@@ -120,7 +120,12 @@ app.mount("/static", StaticFiles(directory=UI_DIR), name="static")
 async def root():
     index_file = os.path.join(UI_DIR, "index.html")
     if os.path.exists(index_file):
-        return FileResponse(index_file)
+        headers = {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+        return FileResponse(index_file, headers=headers)
     return {"message": "Vedic Kiosk UI is loading..."}
 
 
