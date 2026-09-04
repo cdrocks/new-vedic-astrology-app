@@ -296,40 +296,127 @@ body {
   line-height: 1.35;
 }
 
+/* Custom Question Card Special Radiant Aura */
+.topic-card.custom-card {
+  border: 1px solid rgba(243, 198, 111, 0.38);
+  background: linear-gradient(145deg, rgba(28, 24, 38, 0.85), rgba(16, 14, 22, 0.92));
+  box-shadow: 0 0 16px rgba(243, 198, 111, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  animation: customCardPulse 3s ease-in-out infinite alternate;
+}
+
+.topic-card.custom-card .topic-badge {
+  background: rgba(243, 198, 111, 0.14);
+  border-color: rgba(243, 198, 111, 0.45);
+  box-shadow: 0 0 10px rgba(243, 198, 111, 0.25);
+}
+
+.topic-card.custom-card:hover {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 24px rgba(243, 198, 111, 0.38), inset 0 0 12px rgba(243, 198, 111, 0.12);
+}
+
+.topic-card.custom-card.active {
+  border-color: var(--accent-gold);
+  box-shadow: 0 8px 32px rgba(243, 198, 111, 0.45), inset 0 0 20px rgba(243, 198, 111, 0.18);
+  animation: none;
+}
+
+@keyframes customCardPulse {
+  0% {
+    border-color: rgba(243, 198, 111, 0.3);
+    box-shadow: 0 0 10px rgba(243, 198, 111, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  50% {
+    border-color: rgba(243, 198, 111, 0.8);
+    box-shadow: 0 0 24px rgba(243, 198, 111, 0.38), inset 0 0 10px rgba(243, 198, 111, 0.12);
+  }
+  100% {
+    border-color: rgba(243, 198, 111, 0.3);
+    box-shadow: 0 0 10px rgba(243, 198, 111, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+}
+
+.pulse-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--accent-gold);
+  border-radius: 50%;
+  margin-left: 6px;
+  vertical-align: middle;
+  box-shadow: 0 0 8px var(--accent-gold);
+  animation: dotPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0% { transform: scale(0.85); opacity: 0.5; box-shadow: 0 0 4px var(--accent-gold); }
+  50% { transform: scale(1.35); opacity: 1; box-shadow: 0 0 14px var(--gold-bright); }
+  100% { transform: scale(0.85); opacity: 0.5; box-shadow: 0 0 4px var(--accent-gold); }
+}
+
 /* Custom Question Expandable Box */
 .custom-input-box {
   margin-top: 18px;
-  background: rgba(16, 15, 20, 0.85);
-  border: 1px dashed var(--border-gold);
+  background: linear-gradient(135deg, rgba(24, 21, 32, 0.95), rgba(16, 15, 22, 0.92));
+  border: 1px solid rgba(243, 198, 111, 0.45);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 0 24px rgba(243, 198, 111, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  animation: inputBoxPulse 3.2s ease-in-out infinite alternate;
+}
+
+@keyframes inputBoxPulse {
+  0% {
+    box-shadow: 0 0 14px rgba(243, 198, 111, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border-color: rgba(243, 198, 111, 0.35);
+  }
+  100% {
+    box-shadow: 0 0 28px rgba(243, 198, 111, 0.38), inset 0 0 12px rgba(243, 198, 111, 0.12);
+    border-color: rgba(243, 198, 111, 0.7);
+  }
 }
 
 .custom-input-box label {
-  display: block;
-  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
   color: var(--accent-gold);
-  margin-bottom: 8px;
-  font-weight: 600;
+  margin-bottom: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.custom-sparkle {
+  color: var(--accent-gold);
+  font-size: 1rem;
+  animation: sparkleRotate 3s ease-in-out infinite alternate;
+}
+
+@keyframes sparkleRotate {
+  0% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+  100% { transform: scale(1.3) rotate(25deg); opacity: 1; filter: drop-shadow(0 0 6px var(--accent-gold)); }
 }
 
 .custom-input-box textarea {
   width: 100%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(243, 198, 111, 0.3);
   border-radius: var(--radius-sm);
   color: #fff;
-  padding: 12px 14px;
-  font-size: 0.95rem;
+  padding: 14px 16px;
+  font-size: 0.98rem;
   font-family: var(--font-main);
   letter-spacing: 0.2px;
   resize: vertical;
   outline: none;
+  transition: all 0.25s ease;
 }
 
 .custom-input-box textarea:focus {
   border-color: var(--accent-gold);
-  box-shadow: 0 0 12px rgba(243, 198, 111, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 18px rgba(243, 198, 111, 0.35);
 }
 
 /* --- Form Grid --- */

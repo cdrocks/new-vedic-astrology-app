@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- CSS Stylesheet -->
-  <link rel="stylesheet" href="/static/style.css?v=12" />
+  <link rel="stylesheet" href="/static/style.css?v=13" />
 
   <!-- Three.js & GSAP -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -162,8 +162,8 @@
               </svg>
             </div>
             <div class="topic-info">
-              <h3>Custom Question</h3>
-              <p>Ask anything specific on your mind</p>
+              <h3>Ask Custom Question <span class="pulse-dot"></span></h3>
+              <p>Type any specific question on your mind</p>
             </div>
           </div>
 
@@ -171,8 +171,10 @@
 
         <!-- Custom Question Box (Expands when Custom card is clicked) -->
         <div id="custom-question-container" class="custom-input-box" style="display: none;">
-          <label for="custom-question-input">Your Question:</label>
-          <textarea id="custom-question-input" rows="3" placeholder="e.g., What is the most auspicious direction for my career growth this year?"></textarea>
+          <label for="custom-question-input">
+            <span class="custom-sparkle">✦</span> Type Your Specific Question:
+          </label>
+          <textarea id="custom-question-input" rows="3" placeholder="e.g., When is the best time for my job transition or buying property?"></textarea>
         </div>
 
       </div>
@@ -365,6 +367,6 @@
   </div>
 
   <!-- SCRIPT -->
-  <script src="/static/app.js?v=12"></script>
+  <script src="/static/app.js?v=13"></script>
 </body>
 </html>
