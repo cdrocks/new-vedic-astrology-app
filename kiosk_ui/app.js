@@ -413,6 +413,16 @@ function renderReadingResult(data) {
     markdownContainer.textContent = data.reading || "";
   }
 
+  // Sacred Kuldevi & Nakshatra Blessing Card
+  const deity = data.nakshatra_deity || data.archetype_title || "Your Divine Guardian";
+  const blessing = data.blessing_message || data.life_focus || `${deity} is your Nakshatra Lord. May their divine blessings guide you on your life journey.`;
+  const deityTitleEl = document.getElementById("res-deity-title");
+  const deityBlessingEl = document.getElementById("res-deity-blessing");
+  const blessingCardEl = document.getElementById("res-blessing-card");
+  if (deityTitleEl) deityTitleEl.textContent = deity;
+  if (deityBlessingEl) deityBlessingEl.textContent = blessing;
+  if (blessingCardEl) blessingCardEl.style.display = "block";
+
   // Scroll reading pane to top
   const scrollPane = document.querySelector(".reading-scroll-pane");
   if (scrollPane) scrollPane.scrollTop = 0;

@@ -211,33 +211,33 @@
       <div class="input-group">
         <label>Choose Nakshatra</label>
         <select id="seeker-nakshatra" class="input-control">
-          <option value="Revati" selected>Revati (The Cosmic Mystic)</option>
-          <option value="Rohini">Rohini (The Radiant Creator)</option>
-          <option value="Ashwini">Ashwini (The Celestial Healer)</option>
-          <option value="Bharani">Bharani (The Sacred Vessel)</option>
-          <option value="Krittika">Krittika (The Flaming Torch)</option>
-          <option value="Mrigashira">Mrigashira (The Searching Seeker)</option>
-          <option value="Ardra">Ardra (The Cosmic Storm)</option>
-          <option value="Punarvasu">Punarvasu (The Restorer of Light)</option>
-          <option value="Pushya">Pushya (The Divine Nourisher)</option>
-          <option value="Ashlesha">Ashlesha (The Mystic Serpent)</option>
-          <option value="Magha">Magha (The Royal Ancestor)</option>
-          <option value="Purva Phalguni">Purva Phalguni (The Fortunate)</option>
-          <option value="Uttara Phalguni">Uttara Phalguni (The Noble Patron)</option>
-          <option value="Hasta">Hasta (The Golden Hand)</option>
-          <option value="Chitra">Chitra (The Celestial Architect)</option>
-          <option value="Swati">Swati (The Independent Spirit)</option>
-          <option value="Vishakha">Vishakha (The Triumphant Fork)</option>
-          <option value="Anuradha">Anuradha (The Star of Devotion)</option>
-          <option value="Jyeshtha">Jyeshtha (The Chief Protector)</option>
-          <option value="Mula">Mula (The Root of Wisdom)</option>
-          <option value="Purva Ashadha">Purva Ashadha (The Invincible)</option>
-          <option value="Uttara Ashadha">Uttara Ashadha (The Universal Victor)</option>
-          <option value="Shravana">Shravana (The Divine Ear)</option>
-          <option value="Dhanishta">Dhanishta (The Star of Symphony)</option>
-          <option value="Shatabhisha">Shatabhisha (The Hundred Healers)</option>
-          <option value="Purva Bhadrapada">Purva Bhadrapada (The Scorching Light)</option>
-          <option value="Uttara Bhadrapada">Uttara Bhadrapada (The Deep Sage)</option>
+          <option value="Revati" selected>Revati (Lord Vishnu)</option>
+          <option value="Rohini">Rohini (Lord Krishna)</option>
+          <option value="Ashwini">Ashwini (Ashwini Kumaras)</option>
+          <option value="Bharani">Bharani (Lord Yama / Dharmaraja)</option>
+          <option value="Krittika">Krittika (Lord Kartikeya / Murugan)</option>
+          <option value="Mrigashira">Mrigashira (Lord Chandra / Soma)</option>
+          <option value="Ardra">Ardra (Lord Shiva / Rudra)</option>
+          <option value="Punarvasu">Punarvasu (Maa Aditi)</option>
+          <option value="Pushya">Pushya (Lord Brihaspati)</option>
+          <option value="Ashlesha">Ashlesha (Lord Sheshanaga)</option>
+          <option value="Magha">Magha (Pitru Devatas)</option>
+          <option value="Purva Phalguni">Purva Phalguni (Goddess Maha Lakshmi)</option>
+          <option value="Uttara Phalguni">Uttara Phalguni (Lord Aryaman / Surya)</option>
+          <option value="Hasta">Hasta (Lord Savitr / Surya)</option>
+          <option value="Chitra">Chitra (Lord Vishwakarma)</option>
+          <option value="Swati">Swati (Goddess Saraswati)</option>
+          <option value="Vishakha">Vishakha (Lord Indra & Agni)</option>
+          <option value="Anuradha">Anuradha (Lord Mitra / Radha Krishna)</option>
+          <option value="Jyeshtha">Jyeshtha (Lord Indra)</option>
+          <option value="Mula">Mula (Maa Mahakali / Nirriti)</option>
+          <option value="Purva Ashadha">Purva Ashadha (Maa Ganga / Apas)</option>
+          <option value="Uttara Ashadha">Uttara Ashadha (Lord Ganesha / Vishvedevas)</option>
+          <option value="Shravana">Shravana (Lord Vishnu / Venkateshwara)</option>
+          <option value="Dhanishta">Dhanishta (Ashta Vasus)</option>
+          <option value="Shatabhisha">Shatabhisha (Lord Varuna)</option>
+          <option value="Purva Bhadrapada">Purva Bhadrapada (Lord Aja Ekapada / Shiva)</option>
+          <option value="Uttara Bhadrapada">Uttara Bhadrapada (Lord Shiva / Ahirbudhnya)</option>
         </select>
       </div>
     </div>
@@ -412,8 +412,10 @@
         if (json.data && json.data.image_url) {
           resultImg.src = json.data.image_url;
           btnDownload.href = json.data.image_url;
-          resultTitle.innerText = `${json.data.archetype_title || nakshatra + ' Archetype'}`;
-          resultSub.innerText = `${name} • ${nakshatra} Nakshatra`;
+          const deity = json.data.deity || json.data.archetype_title || nakshatra;
+          const blessing = json.data.blessing_message || json.data.life_focus || `${deity} is your Nakshatra Lord. May their divine blessings guide you on your life journey.`;
+          resultTitle.innerText = `✦ ${deity} ✦`;
+          resultSub.innerText = blessing;
           resultBox.style.display = "block";
           resultBox.scrollIntoView({ behavior: "smooth" });
         } else {

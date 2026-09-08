@@ -129,26 +129,29 @@ def _extract_image_result(item) -> Optional[str]:
 
 
 def generate_divine_blessing_card(
-    atmakaraka: str,
-    nakshatra_name: str,
+    atmakaraka: str = "Jupiter",
+    nakshatra_name: str = "Revati",
     seeker_name: str = "Seeker"
 ) -> Dict[str, Any]:
     """
-    Generates an authentic, sacred Divine Blessing Card (Ashirwad Talisman)
-    featuring the beloved ruling deity of the seeker's Atmakaraka (Soul Planet)
-    blessing them within their Nakshatra's celestial aura.
+    Generates a sacred Nakshatra Kuldevi / Deity Blessing Card
+    featuring the presiding deity of the seeker's Janma Nakshatra.
     """
     api_key = get_openai_api_key()
-    deity_info = DEITY_BLESSINGS.get(atmakaraka.strip().capitalize(), DEFAULT_DEITY)
     nak_info = get_nakshatra_archetype(nakshatra_name)
+    deity_name = nak_info.get("deity", "Lord Ganesha")
+    blessing_msg = nak_info.get("blessing_message", f"{deity_name} is your Nakshatra Lord. May their divine blessings guide you on your life journey.")
 
     if not api_key:
         logger.warning("OPENAI_API_KEY not found.")
         return {
             "image_url": None,
-            "deity": deity_info["deity"],
-            "deity_title": deity_info["title"],
-            "blessing": deity_info["blessing"],
+            "deity": deity_name,
+            "deity_title": deity_name,
+            "blessing": blessing_msg,
+            "blessing_message": blessing_msg,
+            "archetype_title": deity_name,
+            "life_focus": blessing_msg,
             "atmakaraka": atmakaraka,
             "nakshatra": nakshatra_name,
             "status": "missing_api_key"
@@ -158,14 +161,12 @@ def generate_divine_blessing_card(
         client = OpenAI(api_key=api_key)
 
         prompt = (
-            f"An authentic, breathtaking sacred Indian Vedic Temple Art & Blessing Card. "
-            f"Depicting the divine form of {deity_info['deity']} ({deity_info['title']}). "
-            f"{deity_info['iconography']}. "
-            f"The deity is radiating warm, benevolent divine golden light of grace (Amrita Ashirwad), "
-            f"showering sacred blessings upon the destiny of the seeker. "
-            f"In the celestial background, the sacred starlight constellation of {nakshatra_name} Nakshatra "
-            f"glows with deep cosmic midnight indigo, floating golden lotus petals, and warm temple oil lamp glow. "
-            f"Framed in an exquisite, classical gold-leaf filigree temple arch with sacred Sanskrit aesthetic. "
+            f"An authentic, breathtaking sacred Indian Vedic Temple Painting of {deity_name}. "
+            f"{nak_info.get('posture', '')}. "
+            f"The deity radiates warm, benevolent golden light of grace (Ashirwad), "
+            f"granting divine protection and auspicious blessings. "
+            f"{nak_info.get('setting', '')}. "
+            f"Framed in an exquisite classical gold-leaf filigree temple arch. "
             f"Masterpiece fine art, divine spiritual serene atmosphere, classical Indian devotional painting, "
             f"rich golden oil-canvas texture, 8k resolution, completely peaceful and awe-inspiring."
         )
@@ -181,7 +182,7 @@ def generate_divine_blessing_card(
                 )
                 image_url = _extract_image_result(resp.data[0])
                 if image_url:
-                    logger.info(f"Generated divine blessing card via {model_name} for {deity_info['deity']}")
+                    logger.info(f"Generated divine blessing card via {model_name} for {deity_name}")
                     break
             except Exception as e:
                 logger.warning(f"images.generate with {model_name} failed: {e}")
@@ -189,9 +190,12 @@ def generate_divine_blessing_card(
         if not image_url:
             return {
                 "image_url": None,
-                "deity": deity_info["deity"],
-                "deity_title": deity_info["title"],
-                "blessing": deity_info["blessing"],
+                "deity": deity_name,
+                "deity_title": deity_name,
+                "blessing": blessing_msg,
+                "blessing_message": blessing_msg,
+                "archetype_title": deity_name,
+                "life_focus": blessing_msg,
                 "atmakaraka": atmakaraka,
                 "nakshatra": nakshatra_name,
                 "status": "error: image generation failed for available models"
@@ -199,9 +203,12 @@ def generate_divine_blessing_card(
 
         return {
             "image_url": image_url,
-            "deity": deity_info["deity"],
-            "deity_title": deity_info["title"],
-            "blessing": deity_info["blessing"],
+            "deity": deity_name,
+            "deity_title": deity_name,
+            "blessing": blessing_msg,
+            "blessing_message": blessing_msg,
+            "archetype_title": deity_name,
+            "life_focus": blessing_msg,
             "atmakaraka": atmakaraka,
             "nakshatra": nakshatra_name,
             "status": "success"
@@ -211,9 +218,12 @@ def generate_divine_blessing_card(
         logger.error(f"Error generating divine blessing card: {exc}", exc_info=True)
         return {
             "image_url": None,
-            "deity": deity_info["deity"],
-            "deity_title": deity_info["title"],
-            "blessing": deity_info["blessing"],
+            "deity": deity_name,
+            "deity_title": deity_name,
+            "blessing": blessing_msg,
+            "blessing_message": blessing_msg,
+            "archetype_title": deity_name,
+            "life_focus": blessing_msg,
             "atmakaraka": atmakaraka,
             "nakshatra": nakshatra_name,
             "status": f"error: {str(exc)}"
@@ -223,6 +233,13 @@ def generate_divine_blessing_card(
 # Backward compatibility aliases
 def generate_nakshatra_portrait(photo_base64: str = "", nakshatra_name: str = "Revati", guest_name: str = "Seeker") -> Dict[str, Any]:
     """Legacy alias: maps to divine blessing generation."""
+    if not photo_base64:
+        return {
+            "status": "no_photo",
+            "image_url": None,
+            "nakshatra": nakshatra_name,
+            "guest_name": guest_name
+        }
     return generate_divine_blessing_card(atmakaraka="Venus", nakshatra_name=nakshatra_name, seeker_name=guest_name)
 
 

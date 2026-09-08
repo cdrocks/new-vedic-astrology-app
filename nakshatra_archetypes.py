@@ -1,8 +1,8 @@
 """
-Nakshatra Archetype & Sacred Visual Metadata Engine.
+Nakshatra Deity & Sacred Kuldevi Blessing Engine.
 
-Defines canonical visual archetypes, postures, settings, and Life Focus summaries
-for all 27 Vedic Nakshatras.
+Defines canonical presiding deities (Nakshatra Lords / Kuldevis) and simple,
+heartfelt divine blessings for all 27 Vedic Nakshatras.
 """
 
 import logging
@@ -11,185 +11,243 @@ from typing import Dict
 logger = logging.getLogger("nakshatra_archetypes")
 
 # ==============================================================================
-# 1. THE 27 NAKSHATRA ARCHETYPES & LIFE FOCUS DEFINITIONS
+# 1. THE 27 NAKSHATRA DEITIES & SIMPLE SACRED BLESSINGS
 # ==============================================================================
 
 NAKSHATRA_ARCHETYPES: Dict[str, Dict[str, str]] = {
     "Ashwini": {
-        "title": "The Celestial Healer & Pioneer",
-        "posture": "seated in upright heroic poise with radiant dawn aura, gentle morning sunlight illuminating serene facial expression",
-        "setting": "golden sunrise over sacred Himalayan foothills, gentle glowing herbal flora, celestial restorative light, authentic Indian Vedic spiritual aesthetic, 8k resolution, cinematic lighting",
-        "life_focus": "Swift breakthroughs, pioneering new horizons, vibrant physical vitality, and natural restorative healing."
+        "deity": "The Ashwini Kumaras",
+        "title": "The Ashwini Kumaras",
+        "blessing_message": "The Ashwini Kumaras are your Nakshatra Lords. May their divine healing and blessings guide you on your life journey.",
+        "life_focus": "The Ashwini Kumaras are your Nakshatra Lords. May their divine healing and blessings guide you on your life journey.",
+        "posture": "The divine Ashwini Kumaras, radiant twin celestial healers radiating golden dawn light and holding sacred healing amrita",
+        "setting": "sacred Vedic dawn sanctuary with golden sunlight, blooming herbal flora, authentic Indian temple art aesthetic, 8k resolution"
     },
     "Bharani": {
-        "title": "The Sacred Vessel & Transformer",
-        "posture": "seated in regal, deeply centered meditation with disciplined composure and warm inner focus",
-        "setting": "ancient sanctum with glowing earthen lamps, rich crimson and terracotta hues, sacred banyan roots, celestial twilight, authentic Indian Vedic spiritual aesthetic, 8k resolution",
-        "life_focus": "Deep personal transformation, moral courage, creative gestation, and unwavering sense of duty."
+        "deity": "Lord Yama (Dharmaraja)",
+        "title": "Lord Yama (Dharmaraja)",
+        "blessing_message": "Lord Dharmaraja is your Nakshatra Lord. May his divine truth, righteousness, and blessings guide you on your life journey.",
+        "life_focus": "Lord Dharmaraja is your Nakshatra Lord. May his divine truth, righteousness, and blessings guide you on your life journey.",
+        "posture": "Lord Dharmaraja seated in majestic dharmic composure holding the sacred sceptre of justice with glowing golden halo",
+        "setting": "sacred ancient temple sanctum with warm earthen lamps, rich terracotta and gold hues, authentic Vedic art aesthetic, 8k resolution"
     },
     "Krittika": {
-        "title": "The Flaming Torch & Truth-Seeker",
-        "posture": "seated in dignified yogic posture with brilliant golden solar radiance, razor-sharp spiritual clarity",
-        "setting": "sacred sacrificial fire altar with pure golden flames, clear starfield above, warm ambient amber light, authentic Indian Vedic aesthetic, 8k resolution",
-        "life_focus": "Decisive leadership, illuminating absolute truth, burning away illusions, and protecting righteousness."
+        "deity": "Lord Kartikeya (Murugan)",
+        "title": "Lord Kartikeya (Murugan)",
+        "blessing_message": "Lord Kartikeya is your Nakshatra Lord. May his divine courage and blessings guide you on your life journey.",
+        "life_focus": "Lord Kartikeya is your Nakshatra Lord. May his divine courage and blessings guide you on your life journey.",
+        "posture": "Lord Kartikeya holding the sacred Vel spear of victory, radiant youthful divine countenance with brilliant golden halo",
+        "setting": "sacred temple courtyard with pure golden sacrificial flame, peacock feathers, warm amber glow, authentic Indian temple art, 8k resolution"
     },
     "Rohini": {
-        "title": "The Radiant Creator & Nurturer",
-        "posture": "seated gracefully in tranquil contemplation with a serene, compassionate smile, soft moonlight embracing the face",
-        "setting": "flourishing sacred grove filled with blooming lotuses, gentle moonbeams reflecting on still crystal waters, ethereal emerald and silver aura, authentic Vedic aesthetic",
-        "life_focus": "Artistic mastery, emotional nourishment, magnetic elegance, and building enduring material abundance."
+        "deity": "Lord Krishna",
+        "title": "Lord Krishna",
+        "blessing_message": "Lord Krishna is your Nakshatra Lord. May his divine love, grace, and blessings guide you on your life journey.",
+        "life_focus": "Lord Krishna is your Nakshatra Lord. May his divine love, grace, and blessings guide you on your life journey.",
+        "posture": "Lord Krishna in graceful Tribhanga posture playing a golden bansuri flute, wearing a peacock feather crown and pitambara silk, gentle loving smile",
+        "setting": "sacred Vrindavan grove with blooming pink lotuses, soft silvery moonlight, celestial starlight, authentic classical Indian devotional art, 8k resolution"
     },
     "Mrigashira": {
-        "title": "The Gentle Seeker & Visionary Scout",
-        "posture": "seated in attentive, upright contemplation with gentle, curious, peaceful gaze",
-        "setting": "mist-covered sacred deodar forest under twilight skies, soft golden-green forest glow, calm dew drops, authentic Indian Vedic aesthetic, 8k resolution",
-        "life_focus": "Relentless pursuit of higher truth, intellectual curiosity, gentle wisdom, and lifelong learning."
+        "deity": "Lord Chandra (Soma Dev)",
+        "title": "Lord Chandra (Soma Dev)",
+        "blessing_message": "Lord Chandra is your Nakshatra Lord. May his divine peace, calm wisdom, and blessings guide you on your life journey.",
+        "life_focus": "Lord Chandra is your Nakshatra Lord. May his divine peace, calm wisdom, and blessings guide you on your life journey.",
+        "posture": "Lord Chandra radiating luminous pearl-silver moonlight, holding sacred lotuses with tranquil compassionate smile",
+        "setting": "celestial evening sky with crystalline crescent moon, floating water lilies, soft ethereal silver and indigo glow, authentic Vedic art, 8k resolution"
     },
     "Ardra": {
-        "title": "The Storm Master & Transformer",
-        "posture": "seated in steady, unshakeable yogic poise amidst cleansing cosmic rainfall, calm expression of profound inner breakthrough",
-        "setting": "celestial rain clouds breaking to reveal brilliant diamond starlight, soft electric-teal and indigo aura, authentic Vedic spiritual aesthetic, 8k resolution",
-        "life_focus": "Overcoming emotional storms, intellectual rebirth, dismantling outdated illusions, and profound reinvention."
+        "deity": "Lord Shiva (Rudra)",
+        "title": "Lord Shiva (Rudra)",
+        "blessing_message": "Lord Shiva is your Nakshatra Lord. May his divine protection, inner strength, and blessings guide you on your life journey.",
+        "life_focus": "Lord Shiva is your Nakshatra Lord. May his divine protection, inner strength, and blessings guide you on your life journey.",
+        "posture": "Lord Shiva in serene deep meditation with crescent moon in matted locks, sacred Ganga flowing, holding Trishula, radiating calm supreme peace",
+        "setting": "sacred Himalayan Kailash peaks under twilight starlight, sacred ash, warm temple lamps, authentic Indian devotional painting, 8k resolution"
     },
     "Punarvasu": {
-        "title": "The Restorer of Light & Abundance",
-        "posture": "seated peacefully with open hands of benevolence, gentle golden light emanating from the heart center",
-        "setting": "radiant dawn sky with a celestial golden rainbow, ancient stone pavilion overlooking lush valleys, warm morning glow, authentic Vedic aesthetic, 8k resolution",
-        "life_focus": "Renewal after adversity, emotional recovery, ethical wealth, and guiding lost souls back to their light."
+        "deity": "Goddess Aditi",
+        "title": "Goddess Aditi (Cosmic Mother)",
+        "blessing_message": "Goddess Aditi is your Nakshatra Deity. May her motherly grace, abundance, and blessings guide you on your life journey.",
+        "life_focus": "Goddess Aditi is your Nakshatra Deity. May her motherly grace, abundance, and blessings guide you on your life journey.",
+        "posture": "Goddess Aditi, the universal mother of light, seated gracefully upon a golden lotus with hands in Varada and Abhaya Mudra, gentle motherly smile",
+        "setting": "radiant golden dawn sky with celestial rainbow of light, ancient temple pavilion, warm morning aura, authentic Indian temple art, 8k resolution"
     },
     "Pushya": {
-        "title": "The Divine Sage & Protector",
-        "posture": "seated in noble, sovereign meditation with deep spiritual poise, golden halo of wisdom surrounding head",
-        "setting": "ancient temple courtyard with carved stone pillars, warm golden lamps, sacred sandalwood fragrance in the air, authentic Indian Vedic aesthetic, 8k resolution",
-        "life_focus": "Spiritual guardianship, unselfish nourishment, ethical leadership, and grounded, enduring dharma."
+        "deity": "Lord Brihaspati (Guru Dev)",
+        "title": "Lord Brihaspati (Guru Dev)",
+        "blessing_message": "Lord Brihaspati is your Nakshatra Lord. May his supreme wisdom, prosperity, and blessings guide you on your life journey.",
+        "life_focus": "Lord Brihaspati is your Nakshatra Lord. May his supreme wisdom, prosperity, and blessings guide you on your life journey.",
+        "posture": "Lord Brihaspati, divine preceptor of wisdom, seated in Padmasana holding sacred golden scriptures and rudraksha mala, radiant golden aura",
+        "setting": "sacred temple sanctum with carved stone pillars, burning sandalwood incense, warm golden oil lamps, authentic Vedic aesthetic, 8k resolution"
     },
     "Ashlesha": {
-        "title": "The Intuitive Mystic & Awakener",
-        "posture": "seated in deeply introspective yogic stillness with piercing, intuitive, knowing eyes",
-        "setting": "secluded sacred pool surrounded by ancient flowering jasmine, mystical emerald and indigo moonlight, tranquil waters, authentic Vedic spiritual aesthetic, 8k resolution",
-        "life_focus": "Awakening deep psychological intuition, mastering emotional currents, strategic vision, and inner alchemy."
+        "deity": "Lord Shesha (Adi Shesha)",
+        "title": "Lord Shesha (Adi Shesha)",
+        "blessing_message": "Lord Shesha is your Nakshatra Lord. May his divine protection, intuition, and blessings guide you on your life journey.",
+        "life_focus": "Lord Shesha is your Nakshatra Lord. May his divine protection, intuition, and blessings guide you on your life journey.",
+        "posture": "The divine golden-hooded Lord Adi Shesha, cosmic guardian of spiritual wisdom, radiating celestial protective light with serene posture",
+        "setting": "sacred celestial pool with blooming emerald lotuses, tranquil waters, mystical blue starlight, authentic Vedic art aesthetic, 8k resolution"
     },
     "Magha": {
-        "title": "The Sovereign Guardian of Heritage",
-        "posture": "seated in stately, regal posture upon an ornate carved stone throne, projecting dignified self-respect and calm authority",
-        "setting": "royal darbar hall with ancient ancestral banners, warm amber torchlight, celestial starlight beaming through high stone arches, authentic Vedic aesthetic",
-        "life_focus": "Honoring ancestral legacy, authoritative leadership, dignified self-mastery, and noble family standing."
+        "deity": "Bhagwan Surya Narayana",
+        "title": "Bhagwan Surya Narayana",
+        "blessing_message": "Bhagwan Surya Narayana is your Nakshatra Lord. May his radiant grace, honor, and blessings guide you on your life journey.",
+        "life_focus": "Bhagwan Surya Narayana is your Nakshatra Lord. May his radiant grace, honor, and blessings guide you on your life journey.",
+        "posture": "Bhagwan Surya Narayana riding the golden solar chariot with radiant Prabhamandala halo, holding red lotuses, sovereign divine smile",
+        "setting": "ancient temple courtyard overlooking majestic golden sunrise, banners of nobility, warm amber torchlight, authentic Vedic art, 8k resolution"
     },
     "Purva Phalguni": {
-        "title": "The Joyous Creator & Alchemist",
-        "posture": "seated in relaxed, graceful elegance amidst soft silk cushions, serene warm countenance filled with natural charm",
-        "setting": "golden palace terrace overlooking blooming summer gardens, warm honeyed sunset skies, soft rose-gold ambient glow, authentic Indian Vedic aesthetic, 8k resolution",
-        "life_focus": "Celebration of life, artistic refinement, harmonious relationships, and spreading warmth and creative delight."
+        "deity": "Goddess Maha Lakshmi",
+        "title": "Goddess Maha Lakshmi",
+        "blessing_message": "Goddess Maha Lakshmi is your Nakshatra Deity. May her divine grace, love, and abundance guide you on your life journey.",
+        "life_focus": "Goddess Maha Lakshmi is your Nakshatra Deity. May her divine grace, love, and abundance guide you on your life journey.",
+        "posture": "Goddess Maha Lakshmi seated gracefully upon a blooming golden-pink lotus, draped in royal crimson and gold silk, showering golden light of prosperity",
+        "setting": "sacred golden temple pond with floating lotuses, warm rose-gold sunset glow, authentic classical Tanjore and temple devotional art, 8k resolution"
     },
     "Uttara Phalguni": {
-        "title": "The Steadfast Patron & Protector",
-        "posture": "seated with upright, noble resolve, hands resting calmly in open mudra of protection and generosity",
-        "setting": "grand stone temple gateway under steady radiant afternoon sun, warm saffron and terracotta light, authentic Vedic aesthetic, 8k resolution",
-        "life_focus": "Honorable service, steadfast friendship, fulfilling solemn commitments, and uplifting those under your care."
+        "deity": "Lord Aryaman",
+        "title": "Lord Aryaman",
+        "blessing_message": "Lord Aryaman is your Nakshatra Lord. May his divine honor, steadfastness, and blessings guide you on your life journey.",
+        "life_focus": "Lord Aryaman is your Nakshatra Lord. May his divine honor, steadfastness, and blessings guide you on your life journey.",
+        "posture": "Lord Aryaman seated in noble dharmic posture with radiant sunlit aura, hand raised in blessing of friendship and loyalty",
+        "setting": "grand stone temple gateway under steady golden afternoon sun, saffron and terracotta light, authentic Vedic aesthetic, 8k resolution"
     },
     "Hasta": {
-        "title": "The Master Craftsman & Healer",
-        "posture": "seated in focused meditation with hands held in a glowing sacred mudra of healing and creation",
-        "setting": "sacred workshop overlooking misty mountains at sunrise, soft golden dust motes in the air, glowing sunbeams, authentic Indian Vedic aesthetic, 8k resolution",
-        "life_focus": "Mastery of craft, precision of thought, healing touch, and turning mental visions into tangible reality."
+        "deity": "Bhagwan Savitur (Surya Dev)",
+        "title": "Bhagwan Savitur",
+        "blessing_message": "Bhagwan Savitur is your Nakshatra Lord. May his divine light, skill, and blessings guide you on your life journey.",
+        "life_focus": "Bhagwan Savitur is your Nakshatra Lord. May his divine light, skill, and blessings guide you on your life journey.",
+        "posture": "Bhagwan Savitur holding hands in radiant mudra of creative illumination, glowing with brilliant morning sunlight and golden warmth",
+        "setting": "sacred temple terrace overlooking misty Himalayan dawn, soft golden light rays, authentic Indian temple art, 8k resolution"
     },
     "Chitra": {
-        "title": "The Cosmic Architect & Innovator",
-        "posture": "seated in visionary poise looking toward the horizon, surrounded by luminous, intricate sacred geometry",
-        "setting": "celestial observatory with glowing crystalline facets, vibrant prismatic light, starry cosmos, authentic Vedic aesthetic, 8k resolution",
-        "life_focus": "Architectural genius, aesthetic innovation, distinctive individuality, and crafting enduring masterpieces."
+        "deity": "Lord Vishwakarma",
+        "title": "Lord Vishwakarma",
+        "blessing_message": "Lord Vishwakarma is your Nakshatra Lord. May his divine creative genius and blessings guide you on your life journey.",
+        "life_focus": "Lord Vishwakarma is your Nakshatra Lord. May his divine creative genius and blessings guide you on your life journey.",
+        "posture": "Lord Vishwakarma, divine architect of the universe, holding sacred instruments of creation with luminous jewel crown and serene smile",
+        "setting": "celestial temple palace with intricate carved golden arches, glowing crystalline jewels, starry cosmos, authentic Vedic aesthetic, 8k resolution"
     },
     "Swati": {
-        "title": "The Independent Breeze & Pathfinder",
-        "posture": "seated in light, fluid meditation with soft celestial winds gently rustling clothing, peaceful detached smile",
-        "setting": "wide open mountain summit under vast open azure skies, gentle swirling mist of light, soft morning breeze, authentic Vedic aesthetic, 8k resolution",
-        "life_focus": "Free-spirited independence, diplomatic adaptability, self-made success, and wide-ranging wisdom."
+        "deity": "Goddess Saraswati",
+        "title": "Goddess Saraswati",
+        "blessing_message": "Goddess Saraswati is your Nakshatra Deity. May her divine wisdom, speech, and blessings guide you on your life journey.",
+        "life_focus": "Goddess Saraswati is your Nakshatra Deity. May her divine wisdom, speech, and blessings guide you on your life journey.",
+        "posture": "Goddess Saraswati seated gracefully upon a pure white lotus beside a serene swan, holding the sacred Veena and Vedas, luminous white silk, radiant halo",
+        "setting": "sacred tranquil riverbank with blooming white lotuses, clear blue skies, soft morning breeze, authentic classical Indian devotional art, 8k resolution"
     },
     "Vishakha": {
-        "title": "The Triumphant Goal-Seeker",
-        "posture": "seated with resolute, focused determination between twin golden pillars of spiritual light, unwavering gaze",
-        "setting": "sacred archway atop a grand flight of stone stairs, brilliant amber twilight sky, triumphant starlight, authentic Vedic aesthetic, 8k resolution",
-        "life_focus": "Single-minded perseverance, overcoming all obstacles, ambitious triumphs, and purposeful success."
+        "deity": "Lord Kartikeya",
+        "title": "Lord Kartikeya",
+        "blessing_message": "Lord Kartikeya is your Nakshatra Lord. May his victorious strength, focus, and blessings guide you on your life journey.",
+        "life_focus": "Lord Kartikeya is your Nakshatra Lord. May his victorious strength, focus, and blessings guide you on your life journey.",
+        "posture": "Lord Kartikeya standing heroically with golden Vel spear and radiant aura of spiritual triumph, fearless compassionate countenance",
+        "setting": "sacred temple hill top under triumphant amber sunset, warm temple lamps, authentic Indian temple painting, 8k resolution"
     },
     "Anuradha": {
-        "title": "The Devoted Soul & Peacemaker",
-        "posture": "seated in deep devotional stillness with palms gently joined near heart center, serene, loving countenance",
-        "setting": "peaceful lotus pond under deep midnight-blue skies studded with gentle stars, floating oil lamps, authentic Indian Vedic aesthetic, 8k resolution",
-        "life_focus": "Unshakable loyalty, devotional friendship, resilience through trials, and building community harmony."
+        "deity": "Radha Rani & Lord Krishna",
+        "title": "Radha Rani & Lord Krishna",
+        "blessing_message": "Radha Rani and Lord Krishna bless your Nakshatra. May their pure love, harmony, and blessings guide you on your life journey.",
+        "life_focus": "Radha Rani and Lord Krishna bless your Nakshatra. May their pure love, harmony, and blessings guide you on your life journey.",
+        "posture": "Radha Rani and Lord Krishna standing together in divine harmony, holding a flute, radiating pure unconditional love and golden grace",
+        "setting": "sacred lotus bower under gentle starry skies, soft glowing oil lamps, blooming kadamba trees, authentic devotional art, 8k resolution"
     },
     "Jyeshtha": {
-        "title": "The Elder Sovereign & Guardian",
-        "posture": "seated in commanding, protective composure with an ancient protective talisman, mature and perceptive gaze",
-        "setting": "ancient stone sanctuary atop a cliff, golden protective aura against twilight storm skies, authentic Vedic aesthetic, 8k resolution",
-        "life_focus": "Assuming senior responsibility, shielding the vulnerable, strategic foresight, and earned respect."
+        "deity": "Lord Narasimha",
+        "title": "Lord Narasimha",
+        "blessing_message": "Lord Narasimha is your Nakshatra Lord. May his fearless protection, courage, and blessings guide you on your life journey.",
+        "life_focus": "Lord Narasimha is your Nakshatra Lord. May his fearless protection, courage, and blessings guide you on your life journey.",
+        "posture": "Lord Narasimha seated in supreme protective majesty, hand raised in Abhaya Mudra granting total protection from all fear and harm",
+        "setting": "ancient stone temple sanctum with glowing golden pillars, warm flame light, authentic Indian temple art, 8k resolution"
     },
     "Mula": {
-        "title": "The Root Alchemist & Truth-Seeker",
-        "posture": "seated in deep grounded meditation at the roots of an ancient banyan tree, eyes closed in profound detachment",
-        "setting": "mystical forest clearing under starlit night, earthen roots illuminated with subtle golden glow, authentic Vedic spiritual aesthetic, 8k resolution",
-        "life_focus": "Getting to the core root of reality, dismantling superficial falsehoods, and seeking spiritual liberation."
+        "deity": "Maa Mahakali",
+        "title": "Maa Mahakali",
+        "blessing_message": "Maa Mahakali is your Nakshatra Deity. May her fearless grace, transformation, and blessings guide you on your life journey.",
+        "life_focus": "Maa Mahakali is your Nakshatra Deity. May her fearless grace, transformation, and blessings guide you on your life journey.",
+        "posture": "Maa Mahakali in compassionate motherly protective form, hand raised in Abhaya Mudra dispelling all darkness and obstacles",
+        "setting": "sacred temple altar with glowing earthen lamps, red flowers, deep midnight blue and gold starlight, authentic Vedic art, 8k resolution"
     },
     "Purva Ashadha": {
-        "title": "The Invincible Stream & Purifier",
-        "posture": "seated serenely by flowing waters, radiating calm and unshakeable inner confidence",
-        "setting": "sacred mountain river cascading through smooth stones under afternoon sunlight, sparkling water droplets, authentic Vedic aesthetic, 8k resolution",
-        "life_focus": "Unstoppable inner momentum, purifying relationships, emotional rejuvenation, and natural victory."
+        "deity": "Maa Ganga",
+        "title": "Maa Ganga",
+        "blessing_message": "Maa Ganga is your Nakshatra Deity. May her pure waters of grace and divine blessings guide you on your life journey.",
+        "life_focus": "Maa Ganga is your Nakshatra Deity. May her pure waters of grace and divine blessings guide you on your life journey.",
+        "posture": "Maa Ganga seated upon a celestial white lotus holding a golden water vessel of amrita, radiating serene purity and gentle compassionate smile",
+        "setting": "sacred river confluence under afternoon sunlight, sparkling crystalline waters, temple bells, authentic Indian devotional art, 8k resolution"
     },
     "Uttara Ashadha": {
-        "title": "The Universal Victor & Statesman",
-        "posture": "seated in unshakeable yogic stillness, radiant with calm nobility and quiet moral authority",
-        "setting": "timeless mountain temple platform under clear golden sun, expansive horizon, authentic Indian Vedic aesthetic, 8k resolution",
-        "life_focus": "Universal righteousness, enduring achievements, grounded humility, and leaving an honorable legacy."
+        "deity": "Lord Ganesha",
+        "title": "Lord Ganesha",
+        "blessing_message": "Lord Ganesha is your Nakshatra Lord. May his auspicious grace, wisdom, and blessings guide you on your life journey.",
+        "life_focus": "Lord Ganesha is your Nakshatra Lord. May his auspicious grace, wisdom, and blessings guide you on your life journey.",
+        "posture": "Lord Ganesha seated upon a golden throne holding a sacred modaka and lotus, raising right hand in divine Abhaya blessing, sweet wise smile",
+        "setting": "sacred temple pavilion with golden floral garlands, warm oil lamps, fragrant durva grass, authentic classical temple art, 8k resolution"
     },
     "Shravana": {
-        "title": "The Sacred Listener & Scholar",
-        "posture": "seated in silent listening meditation with head slightly tilted, peaceful, highly attuned expression",
-        "setting": "ancient hermitage library with palm leaf scrolls, soft golden candlelight, tranquil Himalayan breeze, authentic Vedic aesthetic, 8k resolution",
-        "life_focus": "Attentive listening, deep scholarship, preserving sacred knowledge, and tuning into higher universal truths."
+        "deity": "Lord Vishnu (Narayana)",
+        "title": "Lord Vishnu (Narayana)",
+        "blessing_message": "Lord Vishnu is your Nakshatra Lord. May his divine presence, peace, and blessings guide you on your life journey.",
+        "life_focus": "Lord Vishnu is your Nakshatra Lord. May his divine presence, peace, and blessings guide you on your life journey.",
+        "posture": "Lord Vishnu in serene four-armed form holding Shankha, Chakra, Gada, and Padma, draped in golden pitambara silk, radiant celestial smile",
+        "setting": "celestial ocean of milk with blooming blue lotuses, glowing golden Prabhamandala halo, authentic classical Indian art, 8k resolution"
     },
     "Dhanishta": {
-        "title": "The Rhythm of Cosmic Abundance",
-        "posture": "seated with dynamic, rhythmic grace, holding a serene posture resonant with cosmic harmony",
-        "setting": "celestial marble courtyard under starlit skies with golden harmonic soundwaves rippling through the air, authentic Vedic aesthetic, 8k resolution",
-        "life_focus": "Living in cosmic rhythm, building material wealth, social prestige, and turning chaos into harmony."
+        "deity": "Lord Shiva",
+        "title": "Lord Shiva",
+        "blessing_message": "Lord Shiva is your Nakshatra Lord. May his divine harmony, prosperity, and blessings guide you on your life journey.",
+        "life_focus": "Lord Shiva is your Nakshatra Lord. May his divine harmony, prosperity, and blessings guide you on your life journey.",
+        "posture": "Lord Shiva seated in deep peaceful meditation holding damaru, radiating cosmic harmony, auspicious peace, and golden aura",
+        "setting": "sacred temple courtyard under starry cosmos, warm brass oil lamps, authentic Indian temple painting, 8k resolution"
     },
     "Shatabhisha": {
-        "title": "The Solitary Healer & Mystic",
-        "posture": "seated in solitary, deep contemplation under a canopy of shimmering constellations, calm and introspective gaze",
-        "setting": "desert oasis under an ocean of a hundred stars, deep sapphire and electric-blue celestial aura, authentic Vedic spiritual aesthetic, 8k resolution",
-        "life_focus": "Deep diagnostic healing, uncovering hidden mysteries, comfortable solitude, and visionary perception."
+        "deity": "Lord Dhanvantari",
+        "title": "Lord Dhanvantari",
+        "blessing_message": "Lord Dhanvantari is your Nakshatra Lord. May his divine healing, vitality, and blessings guide you on your life journey.",
+        "life_focus": "Lord Dhanvantari is your Nakshatra Lord. May his divine healing, vitality, and blessings guide you on your life journey.",
+        "posture": "Lord Dhanvantari, divine physician of the cosmos, holding the sacred pot of Amrita with radiant golden healing light",
+        "setting": "sacred temple garden with flourishing medicinal herbs, soft golden sunbeams, tranquil starlight, authentic Vedic art aesthetic, 8k resolution"
     },
     "Purva Bhadrapada": {
-        "title": "The Sacred Fire & Spiritual Ascetic",
-        "posture": "seated in powerful tapasya meditation beside a sacred golden fire, intense yet peaceful spiritual gravity",
-        "setting": "high mountain stone sanctum under midnight sky with sacred ritual fire casting warm amber light on face, authentic Vedic aesthetic, 8k resolution",
-        "life_focus": "Spiritual purification, extraordinary willpower, seeing future horizons, and fearless moral strength."
+        "deity": "Lord Shiva",
+        "title": "Lord Shiva",
+        "blessing_message": "Lord Shiva is your Nakshatra Lord. May his spiritual light, fortitude, and blessings guide you on your life journey.",
+        "life_focus": "Lord Shiva is your Nakshatra Lord. May his spiritual light, fortitude, and blessings guide you on your life journey.",
+        "posture": "Lord Shiva in dignified yogic tapasya beside sacred golden fire, radiating serene power, third eye of supreme intuition, peaceful countenance",
+        "setting": "high mountain stone sanctum under midnight sky with warm golden ritual flame, authentic Indian temple art, 8k resolution"
     },
     "Uttara Bhadrapada": {
-        "title": "The Oceanic Sage & Serene Master",
-        "posture": "seated in profound yogic stillness, countenance reflecting bottomless emotional peace and benevolence",
-        "setting": "calm ocean shore under glowing moonlight, gentle lap of silver waves, serene indigo and pearl aura, authentic Vedic aesthetic, 8k resolution",
-        "life_focus": "Deep psychological stability, psychic composure, unconditional benevolence, and deep spiritual contentment."
+        "deity": "Lord Shiva",
+        "title": "Lord Shiva",
+        "blessing_message": "Lord Shiva is your Nakshatra Lord. May his deep peace, auspicious grace, and blessings guide you on your life journey.",
+        "life_focus": "Lord Shiva is your Nakshatra Lord. May his deep peace, auspicious grace, and blessings guide you on your life journey.",
+        "posture": "Lord Shiva seated in profound yogic stillness, radiant with deep compassion, golden crescent moon in hair, serene eyes granting peace",
+        "setting": "calm sacred lake under silver moonlight, blooming lotuses, peaceful indigo and gold aura, authentic classical Vedic art, 8k resolution"
     },
     "Revati": {
-        "title": "The Cosmic Mystic & Journeyer",
-        "posture": "seated in tranquil yogic Padmasana meditation upon a glowing cosmic lotus, serene closed eyes and peaceful countenance",
-        "setting": "sacred twilight cosmic waters reflecting starry galaxies, soft ethereal violet and golden aura, floating lotus blossoms, authentic Indian Vedic spiritual aesthetic, 8k resolution, cinematic lighting",
-        "life_focus": "Universal compassion, spiritual transcendence, guiding others across life transitions, and transcendent wisdom."
+        "deity": "Lord Vishnu",
+        "title": "Lord Vishnu",
+        "blessing_message": "Lord Vishnu is your Nakshatra Lord. May his loving protection, safe paths, and blessings guide you on your life journey.",
+        "life_focus": "Lord Vishnu is your Nakshatra Lord. May his loving protection, safe paths, and blessings guide you on your life journey.",
+        "posture": "Lord Vishnu as Pushan, the divine protector of journeys, extending gentle hand in Abhaya Varada blessing, holding golden lotus, benevolent smile",
+        "setting": "sacred twilight riverbank with blooming pink lotuses, soft golden lanterns, starry night sky, authentic classical Indian devotional art, 8k resolution"
     }
 }
 
-# Default fallback archetype if nakshatra is unrecognized
+# Default fallback if nakshatra is unrecognized
 DEFAULT_ARCHETYPE = {
-    "title": "The Cosmic Seeker",
-    "posture": "seated in peaceful yogic meditation with calm, centered expression",
-    "setting": "sacred Himalayan temple platform under starlit sky, glowing golden oil lamps, authentic Indian Vedic aesthetic, 8k resolution",
-    "life_focus": "Spiritual alignment, inner clarity, noble purpose, and living in harmony with cosmic law."
+    "deity": "Lord Ganesha",
+    "title": "Lord Ganesha",
+    "blessing_message": "Lord Ganesha is your Nakshatra Lord. May his auspicious grace and divine blessings guide you on your life journey.",
+    "life_focus": "Lord Ganesha is your Nakshatra Lord. May his auspicious grace and divine blessings guide you on your life journey.",
+    "posture": "Lord Ganesha seated in divine blessing posture holding lotus and modaka with radiant golden halo",
+    "setting": "sacred temple sanctum with warm oil lamps, authentic Indian temple art, 8k resolution"
 }
 
 
 def get_nakshatra_archetype(nakshatra_name: str) -> Dict[str, str]:
-    """Retrieve the visual archetype and Life Focus for a given Nakshatra."""
+    """Retrieve the presiding Deity and simple blessing message for a given Nakshatra."""
+    if not nakshatra_name:
+        return DEFAULT_ARCHETYPE
     clean_name = nakshatra_name.strip()
     for key, val in NAKSHATRA_ARCHETYPES.items():
         if key.lower() in clean_name.lower():
@@ -215,5 +273,3 @@ __all__ = [
     "get_nakshatra_archetype",
     "generate_nakshatra_portrait",
 ]
-
-
