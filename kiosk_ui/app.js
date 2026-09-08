@@ -444,15 +444,33 @@ function startIdleCountdown() {
     if (countEl) countEl.textContent = countdownSeconds;
     if (countdownSeconds <= 0) {
       clearInterval(idleTimerInterval);
-      resetToWelcomeScreen();
+      window.location.href = "/";
     }
   }, 1000);
 }
 
+// Gentle form inactivity timeout (2.5 mins idle returns to cosmic attractor)
+let formInactivityTimeout = null;
+const FORM_INACTIVITY_LIMIT = 150000;
+
+function resetFormInactivityTimer() {
+  clearTimeout(formInactivityTimeout);
+  const screenInput = document.getElementById("screen-input");
+  if (screenInput && screenInput.classList.contains("active")) {
+    formInactivityTimeout = setTimeout(() => {
+      window.location.href = "/";
+    }, FORM_INACTIVITY_LIMIT);
+  }
+}
+
 // Attach activity listeners to window & scroll containers
 ["mousedown", "mousemove", "touchstart", "touchmove", "scroll", "keydown"].forEach((evtName) => {
-  window.addEventListener(evtName, resetIdleTimerOnActivity, { passive: true });
+  window.addEventListener(evtName, () => {
+    resetIdleTimerOnActivity();
+    resetFormInactivityTimer();
+  }, { passive: true });
 });
+resetFormInactivityTimer();
 
 function resetToWelcomeScreen() {
   clearInterval(idleTimerInterval);

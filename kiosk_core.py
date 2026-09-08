@@ -600,12 +600,18 @@ def compute_kiosk_reading(
 
     reading_text = response.choices[0].message.content or ""
 
+    from nakshatra_archetypes import get_nakshatra_archetype
+    moon_nak = chart_data["Moon"]["nakshatra"]
+    nak_archetype = get_nakshatra_archetype(moon_nak)
+
     return {
         "name": name,
         "ascendant": asc_sign,
         "moon_sign": chart_data["Moon"]["sign"],
         "sun_sign": chart_data["Sun"]["sign"],
-        "nakshatra": chart_data["Moon"]["nakshatra"],
+        "nakshatra": moon_nak,
+        "archetype_title": nak_archetype["title"],
+        "life_focus": nak_archetype["life_focus"],
         "atmakaraka": atmakaraka,
         "current_dasha": f"{current_mahadasha} - {current_antardasha}" if current_antardasha else current_mahadasha,
         "reading": reading_text,

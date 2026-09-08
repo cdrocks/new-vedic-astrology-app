@@ -107,6 +107,7 @@ def calculate_moon_details(moon_deg: float, sun_deg: float | None = None) -> dic
 
     return {
         "sign_idx": R,
+        "sign_index": R,
         "sign_name": sign_name,
         "degree_total": L,
         "degree_in_sign": adv_deg,
@@ -116,6 +117,7 @@ def calculate_moon_details(moon_deg: float, sun_deg: float | None = None) -> dic
         "nakshatra_idx": nak_idx,
         "pada": pada,
         "pada_boundary_dist_deg": dist_pada_deg,
+        "pada_boundary_distance_deg": dist_pada_deg,
         "is_near_boundary": dist_pada_deg < 0.5,
         **paksha_info
     }

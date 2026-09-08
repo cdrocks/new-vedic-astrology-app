@@ -24,3 +24,6 @@ event_leads.jsonl
 !pyrefly.toml
 !mise.toml
 !nixpacks.toml
+
+# Test image outputs
+*_test.png

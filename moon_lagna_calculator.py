@@ -6,7 +6,20 @@ import pytz
 from datetime import datetime, timedelta
 import math
 import os
+import sys
 import matplotlib.pyplot as plt
+
+# Ensure local imports are discoverable
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from moon.moon_engine import (
+    calculate_moon_details,
+    get_chandra_lagna_data,
+    calculate_moon_gochar,
+    TITHI_NAMES,
+    TARA_BALA_TYPES,
+    CLASSICAL_MOON_GOCHAR_AUSPICIOUS,
+)
 
 # ==========================================
 # 1. EXACT MOON SPEC ENGINE
@@ -39,37 +52,6 @@ VIMSHOTTARI_YEARS = {
     "Ketu": 7, "Venus": 20, "Sun": 6, "Moon": 10, "Mars": 7,
     "Rahu": 18, "Jupiter": 16, "Saturn": 19, "Mercury": 17
 }
-
-def calculate_moon_details(L):
-    """Calculates Sign, Nakshatra, and Pada using exact arc-minute math."""
-    L = L % 360.0
-    M = L * 60.0
-
-    R = math.floor(L / 30.0)
-    sign_name = RASHI_NAMES[R]
-
-    advancement_deg = L - (R * 30.0)
-    d_int = int(advancement_deg)
-    m_int = int(round((advancement_deg - d_int) * 60))
-    advancement_str = f"{d_int}° {m_int:02d}'"
-
-    N = math.floor(M / 800.0)
-    nak_name, nak_lord = NAKSHATRAS[N]
-
-    remaining_minutes = M % 800.0
-    P = math.floor(remaining_minutes / 200.0) + 1
-
-    dist_to_pada_boundary = min(remaining_minutes % 200.0, 200.0 - (remaining_minutes % 200.0))
-
-    return {
-        "sign_index": R,
-        "sign_name": sign_name,
-        "advancement": advancement_str,
-        "nakshatra": nak_name,
-        "nakshatra_lord": nak_lord,
-        "pada": P,
-        "pada_boundary_distance_deg": dist_to_pada_boundary / 60.0
-    }
 
 def get_house_from_sign_idx(ref_sign_idx, planet_sign_idx):
     """Whole-sign house position relative to a reference sign (Asc or Moon)."""
@@ -437,7 +419,8 @@ if submit_button:
     asc_sign_idx = int(sidereal_asc / 30) % 12
 
     moon_deg = chart_data["Moon"]["degree_total"]
-    moon_details = calculate_moon_details(moon_deg)
+    sun_deg = chart_data["Sun"]["degree_total"]
+    moon_details = calculate_moon_details(moon_deg, sun_deg)
     moon_sign_idx = moon_details["sign_index"]
 
     for p_name, p_data in chart_data.items():
@@ -452,14 +435,14 @@ if submit_button:
     st.write("---")
 
     # ==========================================
-    # MOON DETAILS
+    # MOON DETAILS & MENTAL VITALITY
     # ==========================================
-    st.header("🌕 Moon Sign Details")
+    st.header("🌕 Moon Sign Details & Mental Vitality")
 
-    mcol1, mcol2, mcol3 = st.columns(3)
+    mcol1, mcol2, mcol3, mcol4 = st.columns(4)
 
     with mcol1:
-        st.metric("Moon Sign (Rasi)", moon_details["sign_name"])
+        st.metric("Moon Sign (Rasi)", RASHI_NAMES[moon_sign_idx])
         st.caption(f"Advancement: {moon_details['advancement']}")
 
     with mcol2:
@@ -468,13 +451,37 @@ if submit_button:
 
     with mcol3:
         st.metric("Pada (Quarter)", moon_details["pada"])
-        st.caption(f"Total Longitude: {moon_deg:.4f}°")
+        st.caption(f"Total: {moon_deg:.2f}°")
 
-    if moon_details["pada_boundary_distance_deg"] < 0.5:
+    with mcol4:
+        paksha_str = moon_details.get("paksha", "N/A")
+        tithi_str = moon_details.get("tithi_name", "N/A")
+        st.metric("Lunar Phase", f"{paksha_str} Paksha")
+        st.caption(f"Tithi: {tithi_str}")
+
+    if moon_details.get("paksha_desc"):
+        st.info(f"🌔 **Mental Vitality & Paksha Bala:** {moon_details['paksha_desc']}")
+
+    if moon_details.get("is_near_boundary") or moon_details["pada_boundary_distance_deg"] < 0.5:
         st.warning(
             f"⚠️ The Moon is only {moon_details['pada_boundary_distance_deg'] * 60:.1f} arc-minutes "
             f"from a Pada boundary. If birth time is uncertain, double-check it."
         )
+
+    st.write("---")
+
+    # ==========================================
+    # LUNAR PSYCHOLOGICAL YOGAS
+    # ==========================================
+    st.header("🧠 Lunar Yogas & Mental Wiring")
+    st.caption("Classical Chandra Yogas that define your subconscious operating system, stress response, and emotional drive.")
+    chandra_data = get_chandra_lagna_data(chart_data, moon_sign_idx)
+    yogas = chandra_data.get("psychological_yogas", [])
+    if yogas:
+        for yoga in yogas:
+            st.markdown(f"✨ **{yoga}**")
+    else:
+        st.markdown("✨ *Balanced emotional foundation; no severe afflictions or isolation on Natal Moon.*")
 
     st.write("---")
 
@@ -516,18 +523,12 @@ if submit_button:
     # ==========================================
     st.header("📋 Planetary Positions")
 
-    table_data = [{
-        "Planet": "🌙 Moon (Chandra Lagna)",
-        "Sign": moon_details["sign_name"],
-        "House from Asc": "—",
-        "House from Moon": 1,
-        "Degree": f"{chart_data['Moon']['degree_in_sign']:.2f}°",
-        "Status": "Dir"
-    }]
-
+    table_data = []
     for p_name, p_data in chart_data.items():
+        is_moon = (p_name == "Moon")
+        p_label = "🌙 Moon (Chandra Lagna)" if is_moon else p_name
         table_data.append({
-            "Planet": p_name,
+            "Planet": p_label,
             "Sign": p_data["sign"],
             "House from Asc": p_data["asc_house"],
             "House from Moon": p_data["moon_house"],
@@ -585,25 +586,67 @@ if submit_button:
 
         st.table(antar_table)
 
+    # 2027 Predictor Baseline
+    dasha_2027 = find_current_period(mahadashas, datetime(2027, 1, 1, tzinfo=pytz.UTC))
+    if dasha_2027:
+        antar_2027_list = calculate_antardashas(dasha_2027["lord"], dasha_2027["start"], dasha_2027["years"])
+        antar_2027 = find_current_period(antar_2027_list, datetime(2027, 1, 1, tzinfo=pytz.UTC))
+        antar_lord_str = f" / {antar_2027['lord']} Antardasha" if antar_2027 else ""
+        st.info(f"🔮 **2027 Predictor Baseline:** In 2027, you will operate under **{dasha_2027['lord']} Mahadasha{antar_lord_str}**.")
+
     st.caption("Dasha dates use a 365.2425-day astronomical year approximation.")
 
     st.write("---")
 
     # ==========================================
-    # CURRENT TRANSITS / GOCHAR
+    # CURRENT & 2027 TRANSITS (GOCHAR)
     # ==========================================
-    st.header("🪐 Current Planet Transits (Gochar)")
+    st.header("🪐 Planetary Transits (Gochar) & Future Predictor")
 
-    now_aware = datetime.now(pytz.UTC)
-    now_local = now_aware.astimezone(tz)
+    t_mode = st.radio(
+        "🔮 Select Transit Timeline Target:",
+        [
+            "Live (Current Moment)",
+            "2027 Predictor Window (1 Jan 2027)",
+            "2027 Mid-Year Milestone (1 June 2027)",
+            "Custom Date"
+        ],
+        horizontal=True
+    )
 
-    st.markdown(f"Live planetary positions as of **{now_local.strftime('%d %b %Y, %H:%M %Z')}**.")
+    if t_mode == "Live (Current Moment)":
+        target_dt = datetime.now(pytz.UTC)
+        time_heading = f"Live planetary transits as of **{target_dt.astimezone(tz).strftime('%d %b %Y, %H:%M %Z')}**."
+    elif t_mode == "2027 Predictor Window (1 Jan 2027)":
+        target_dt = datetime(2027, 1, 1, 12, 0, 0, tzinfo=pytz.UTC)
+        time_heading = "Planetary transits for **2027 Opening Window (1 January 2027)**."
+    elif t_mode == "2027 Mid-Year Milestone (1 June 2027)":
+        target_dt = datetime(2027, 6, 1, 12, 0, 0, tzinfo=pytz.UTC)
+        time_heading = "Planetary transits for **2027 Mid-Year Window (1 June 2027)**."
+    else:
+        chosen_d = st.date_input("Select Target Date:", value=datetime(2027, 1, 1))
+        target_dt = datetime(chosen_d.year, chosen_d.month, chosen_d.day, 12, 0, 0, tzinfo=pytz.UTC)
+        time_heading = f"Planetary transits as of **{chosen_d.strftime('%d %b %Y')}**."
+
+    st.markdown(time_heading)
+
+    # 2027 Focus banner
+    if target_dt.year == 2027:
+        dasha_target = find_current_period(mahadashas, target_dt)
+        if dasha_target:
+            sub_target_list = calculate_antardashas(dasha_target["lord"], dasha_target["start"], dasha_target["years"])
+            sub_target = find_current_period(sub_target_list, target_dt)
+            sub_target_str = f" / {sub_target['lord']} Antardasha" if sub_target else ""
+            st.success(
+                f"🎯 **2027 Active Operating Period:** Running **{dasha_target['lord']} Mahadasha{sub_target_str}**. "
+                f"Below is the exact transit activation on your Moon Lagna during 2027."
+            )
 
     jd_now = swe.julday(
-        now_aware.year,
-        now_aware.month,
-        now_aware.day,
-        now_aware.hour + now_aware.minute / 60.0 + now_aware.second / 3600.0
+        target_dt.year,
+        target_dt.month,
+        target_dt.day,
+        target_dt.hour + target_dt.minute / 60.0 + target_dt.second / 3600.0
     )
 
     transit_data = {}
@@ -635,12 +678,39 @@ if submit_button:
         "status": "Rx"
     }
 
-    current_moon_details = calculate_moon_details(transit_data["Moon"]["degree_total"])
-
-    st.info(
-        f"🌙 **Today's Transit Moon:** {current_moon_details['sign_name']} | "
-        f"**Nakshatra:** {current_moon_details['nakshatra']} (Pada {current_moon_details['pada']})"
+    # Moon Gochar analysis
+    today_moon_deg = transit_data["Moon"]["degree_total"]
+    natal_moon_nak_idx = moon_details.get("nakshatra_idx", 0)
+    moon_gochar = calculate_moon_gochar(
+        chart_data,
+        transit_data,
+        moon_sign_idx,
+        natal_moon_nak_idx,
+        today_moon_deg
     )
+
+    # Metrics Row
+    gcol1, gcol2, gcol3 = st.columns(3)
+    with gcol1:
+        st.metric("Saturn (Shani) Cycle", moon_gochar["shani_phase"])
+        st.caption(moon_gochar["shani_desc"])
+    with gcol2:
+        st.metric("Jupiter (Guru) Transit", moon_gochar["guru_status"])
+        st.caption(moon_gochar["guru_desc"])
+    with gcol3:
+        tb = moon_gochar.get("tara_bala", {})
+        if tb:
+            st.metric("Tara Bala (Micro-Mood)", f"{tb.get('tara_name', 'N/A')} Tara")
+            st.caption(f"{tb.get('transit_moon_nakshatra', '')} · {tb.get('tara_desc', '')}")
+        else:
+            st.metric("Tara Bala", "N/A")
+
+    # Conjunctions
+    conjs = moon_gochar.get("transit_on_natal_conjunctions", [])
+    if conjs:
+        st.subheader("⚡ Active Transit-on-Natal Conjunctions")
+        for c in conjs:
+            st.warning(f"⚡ {c}")
 
     transit_ref = st.radio(
         "View transit chart relative to:",
@@ -651,10 +721,10 @@ if submit_button:
 
     if "Moon" in transit_ref:
         transit_ref_idx = moon_sign_idx
-        transit_chart_title = "Transits over Natal Moon Chart"
+        transit_chart_title = f"Transits over Natal Moon Chart ({target_dt.strftime('%b %Y')})"
     else:
         transit_ref_idx = asc_sign_idx
-        transit_chart_title = "Transits over Natal Lagna Chart"
+        transit_chart_title = f"Transits over Natal Lagna Chart ({target_dt.strftime('%b %Y')})"
 
     natal_signs = {PLANET_ABBR[name]: d["sign_idx"] for name, d in chart_data.items()}
     natal_retro = {PLANET_ABBR[name]: d["status"] for name, d in chart_data.items()}
@@ -673,13 +743,14 @@ if submit_button:
 
     st.pyplot(fig_transit)
     st.caption(
-        "🔵 **Blue** = Natal planets | 🔴 **Red** = Current transit planets. "
-        "Red planets with blue planets in the same box indicate transit over natal planets."
+        "🔵 **Blue** = Natal planets | 🔴 **Red** = Transiting planets. "
+        "Red planets sharing a house with blue planets indicate active planetary transits over your birth placements."
     )
 
     # ==========================================
     # TRANSIT TABLE (ORGANIZED BY MOON HOUSE)
     # ==========================================
+    st.subheader("📊 Moon-Centered Transit Matrix (Phaladeepika Auspiciousness)")
 
     # Group Natal Planets by House from Moon
     natal_by_moon_house = {h: [] for h in range(1, 13)}
@@ -696,28 +767,35 @@ if submit_button:
         if t_data["status"] == "Rx":
             label += "(R)"
         h_moon = get_house_from_sign_idx(moon_sign_idx, t_data["sign_idx"])
-        transit_by_moon_house[h_moon].append(label)
+        transit_by_moon_house[h_moon].append((t_name, label))
 
-    # Build the table row by row (House 1 to 12 from Moon)
+    # Classical ratings map
+    classical_ratings = {t["planet"]: t["classical_rating"] for t in moon_gochar.get("transits", [])}
+
     moon_house_table = []
     for h in range(1, 13):
-        # The zodiac sign for this house relative to the Natal Moon
         sign_idx = (moon_sign_idx + h - 1) % 12
         zodiac_name = RASHI_NAMES[sign_idx]
         
         natal_here = ", ".join(natal_by_moon_house[h]) if natal_by_moon_house[h] else "—"
-        transit_here = ", ".join(transit_by_moon_house[h]) if transit_by_moon_house[h] else "—"
+        
+        transit_p_list = []
+        for t_p_name, t_p_lbl in transit_by_moon_house[h]:
+            rating = classical_ratings.get(t_p_name, "")
+            tag = " [✓ Auspicious]" if rating == "Favorable" else (" [⚠️ Demanding]" if rating == "Challenging" else "")
+            transit_p_list.append(f"{t_p_lbl}{tag}")
+            
+        transit_here = ", ".join(transit_p_list) if transit_p_list else "—"
         
         moon_house_table.append({
-            "House No": h,
+            "House from Moon": f"House {h}",
             "Zodiac Sign": zodiac_name,
             "Natal Planets": natal_here,
             "Transit Planets": transit_here
         })
 
     st.table(moon_house_table)
-
     st.caption(
-        "Organized strictly by your Natal Moon. This makes it easy to see exactly which "
-        "house and zodiac sign your transiting planets (t-) are currently occupying alongside your birth planets."
+        "Organized strictly from your Natal Moon (Chandra Lagna = House 1). "
+        "Ratings follow classical Phaladeepika transit rules for planetary impacts relative to the radical Moon."
     )

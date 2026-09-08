@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sacred Tanjore Portrait Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07060f;
+      --card-bg: rgba(20, 17, 32, 0.85);
+      --gold: #f5c862;
+      --gold-glow: rgba(245, 200, 98, 0.35);
+      --border: rgba(245, 200, 98, 0.25);
+      --text: #f5f4f8;
+      --text-muted: #9f9baa;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body {
+      background: radial-gradient(circle at 50% 15%, #1c142c 0%, #07060f 80%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 16px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .title {
+      font-family: 'Cinzel', serif;
+      font-size: 2.2rem;
+      background: linear-gradient(135deg, #fff 20%, #f5c862 60%, #e09b30 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 6px;
+    }
+    .lab-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 30px var(--gold-glow);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 680px;
+      padding: 28px;
+      backdrop-filter: blur(16px);
+    }
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 540px) {
+      .controls-grid { grid-template-columns: 1fr; }
+    }
+    .input-group label {
+      display: block;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--gold);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .input-control {
+      width: 100%;
+      background: rgba(10, 8, 18, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-control:focus {
+      border-color: var(--gold);
+    }
+    .camera-box {
+      position: relative;
+      width: 100%;
+      height: 320px;
+      background: #030206;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    video, .preview-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .cam-btns {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .btn {
+      flex: 1;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      border: none;
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.14);
+    }
+    .btn-gold {
+      width: 100%;
+      background: linear-gradient(135deg, #f5c862, #e09b30);
+      color: #120a02;
+      font-size: 1.05rem;
+      font-weight: 700;
+      box-shadow: 0 4px 20px rgba(245, 200, 98, 0.4);
+      padding: 15px 24px;
+    }
+    .btn-gold:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(245, 200, 98, 0.6);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+    .result-container {
+      margin-top: 24px;
+      display: none;
+      text-align: center;
+      background: rgba(10, 8, 18, 0.9);
+      border: 1px solid var(--gold);
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .result-img {
+      width: 100%;
+      max-width: 480px;
+      border-radius: 12px;
+      border: 2px solid var(--gold);
+      box-shadow: 0 0 35px rgba(245, 200, 98, 0.45);
+      margin: 16px 0;
+    }
+    .loader {
+      display: none;
+      text-align: center;
+      padding: 30px;
+    }
+    .spinner {
+      width: 46px;
+      height: 46px;
+      border: 3px solid rgba(245, 200, 98, 0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .back-link {
+      margin-top: 24px;
+      color: var(--gold);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1 class="title">Sacred Tanjore Portrait Lab</h1>
+    <p class="subtitle">Instant 1-Click Photo ➔ 24k Gold Temple Art Transformation</p>
+  </div>
+
+  <div class="lab-card">
+    <div class="controls-grid">
+      <div class="input-group">
+        <label>Your Name</label>
+        <input type="text" id="seeker-name" class="input-control" value="Seeker" />
+      </div>
+
+      <div class="input-group">
+        <label>Choose Nakshatra</label>
+        <select id="seeker-nakshatra" class="input-control">
+          <option value="Revati" selected>Revati (The Cosmic Mystic)</option>
+          <option value="Rohini">Rohini (The Radiant Creator)</option>
+          <option value="Ashwini">Ashwini (The Celestial Healer)</option>
+          <option value="Bharani">Bharani (The Sacred Vessel)</option>
+          <option value="Krittika">Krittika (The Flaming Torch)</option>
+          <option value="Mrigashira">Mrigashira (The Searching Seeker)</option>
+          <option value="Ardra">Ardra (The Cosmic Storm)</option>
+          <option value="Punarvasu">Punarvasu (The Restorer of Light)</option>
+          <option value="Pushya">Pushya (The Divine Nourisher)</option>
+          <option value="Ashlesha">Ashlesha (The Mystic Serpent)</option>
+          <option value="Magha">Magha (The Royal Ancestor)</option>
+          <option value="Purva Phalguni">Purva Phalguni (The Fortunate)</option>
+          <option value="Uttara Phalguni">Uttara Phalguni (The Noble Patron)</option>
+          <option value="Hasta">Hasta (The Golden Hand)</option>
+          <option value="Chitra">Chitra (The Celestial Architect)</option>
+          <option value="Swati">Swati (The Independent Spirit)</option>
+          <option value="Vishakha">Vishakha (The Triumphant Fork)</option>
+          <option value="Anuradha">Anuradha (The Star of Devotion)</option>
+          <option value="Jyeshtha">Jyeshtha (The Chief Protector)</option>
+          <option value="Mula">Mula (The Root of Wisdom)</option>
+          <option value="Purva Ashadha">Purva Ashadha (The Invincible)</option>
+          <option value="Uttara Ashadha">Uttara Ashadha (The Universal Victor)</option>
+          <option value="Shravana">Shravana (The Divine Ear)</option>
+          <option value="Dhanishta">Dhanishta (The Star of Symphony)</option>
+          <option value="Shatabhisha">Shatabhisha (The Hundred Healers)</option>
+          <option value="Purva Bhadrapada">Purva Bhadrapada (The Scorching Light)</option>
+          <option value="Uttara Bhadrapada">Uttara Bhadrapada (The Deep Sage)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Camera Viewfinder -->
+    <div class="camera-box" id="camera-container">
+      <video id="webcam" autoplay playsinline muted></video>
+      <img id="preview-img" class="preview-img" style="display: none;" />
+      <canvas id="canvas" style="display: none;"></canvas>
+    </div>
+
+    <!-- Camera Actions -->
+    <div class="cam-btns">
+      <button type="button" class="btn btn-secondary" id="btn-snap" onclick="snapPhoto();">
+        📷 Snap Photo
+      </button>
+      <label class="btn btn-secondary" style="cursor: pointer;">
+        📁 Upload Photo
+        <input type="file" id="file-upload" accept="image/*" onchange="uploadPhoto(event);" style="display: none;" />
+      </label>
+      <button type="button" class="btn btn-secondary" id="btn-retake" onclick="startCamera();" style="display: none;">
+        🔄 Retake
+      </button>
+    </div>
+
+    <!-- Generate CTA -->
+    <button type="button" id="btn-generate" class="btn btn-gold" onclick="generateTanjorePortrait();" disabled>
+      ✨ Generate Tanjore Gold-Leaf Artwork
+    </button>
+
+    <!-- Loader -->
+    <div id="loader" class="loader">
+      <div class="spinner"></div>
+      <p style="color: var(--gold); font-weight: 600; font-size: 1.05rem;">Weaving 24k Gold-Leaf Tanjore Artwork...</p>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">Applying Prabhamandala halo, temple jewelry, and classical brushwork (~10-15s)</p>
+    </div>
+
+    <!-- Result -->
+    <div id="result-box" class="result-container">
+      <h3 style="color: var(--gold); font-family: 'Cinzel', serif;" id="result-title">Sacred Tanjore Masterpiece</h3>
+      <p style="color: var(--text-muted); font-size: 0.88rem;" id="result-sub"></p>
+      <img id="result-img" class="result-img" src="" alt="Tanjore Portrait" />
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <a id="btn-download" class="btn btn-secondary" href="" target="_blank" download="sacred_tanjore_portrait.png">
+          ⬇️ Save Image
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <a href="/" class="back-link">
+    ← Back to Full Vedic Kundali Kiosk App
+  </a>
+
+  <script>
+    let stream = null;
+    let photoBase64 = "";
+
+    async function startCamera() {
+      const video = document.getElementById("webcam");
+      const preview = document.getElementById("preview-img");
+      const retakeBtn = document.getElementById("btn-retake");
+      const snapBtn = document.getElementById("btn-snap");
+
+      preview.style.display = "none";
+      video.style.display = "block";
+      retakeBtn.style.display = "none";
+      snapBtn.style.display = "inline-flex";
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1080 }, height: { ideal: 1080 }, facingMode: "user" }
+        });
+        video.srcObject = stream;
+      } catch (err) {
+        console.warn("Webcam access error:", err);
+      }
+    }
+
+    function snapPhoto() {
+      const video = document.getElementById("webcam");
+      const canvas = document.getElementById("canvas");
+      const preview = document.getElementById("preview-img");
+      const retakeBtn = document.getElementById("btn-retake");
+      const snapBtn = document.getElementById("btn-snap");
+      const genBtn = document.getElementById("btn-generate");
+
+      if (!video.videoWidth) return;
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0);
+
+      photoBase64 = canvas.toDataURL("image/jpeg", 0.9);
+      preview.src = photoBase64;
+      preview.style.display = "block";
+      video.style.display = "none";
+
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+
+      retakeBtn.style.display = "inline-flex";
+      snapBtn.style.display = "none";
+      genBtn.disabled = false;
+    }
+
+    function uploadPhoto(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        photoBase64 = e.target.result;
+        const preview = document.getElementById("preview-img");
+        const video = document.getElementById("webcam");
+        const retakeBtn = document.getElementById("btn-retake");
+        const snapBtn = document.getElementById("btn-snap");
+        const genBtn = document.getElementById("btn-generate");
+
+        preview.src = photoBase64;
+        preview.style.display = "block";
+        video.style.display = "none";
+
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+
+        retakeBtn.style.display = "inline-flex";
+        snapBtn.style.display = "none";
+        genBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function generateTanjorePortrait() {
+      if (!photoBase64) {
+        alert("Please snap or upload a photo first!");
+        return;
+      }
+
+      const name = document.getElementById("seeker-name").value || "Seeker";
+      const nakshatra = document.getElementById("seeker-nakshatra").value;
+      const genBtn = document.getElementById("btn-generate");
+      const loader = document.getElementById("loader");
+      const resultBox = document.getElementById("result-box");
+      const resultImg = document.getElementById("result-img");
+      const resultTitle = document.getElementById("result-title");
+      const resultSub = document.getElementById("result-sub");
+      const btnDownload = document.getElementById("btn-download");
+
+      genBtn.disabled = true;
+      loader.style.display = "block";
+      resultBox.style.display = "none";
+
+      try {
+        const resp = await fetch("/api/nakshatra-portrait", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            photo: photoBase64,
+            nakshatra: nakshatra,
+            name: name
+          })
+        });
+
+        const json = await resp.json();
+        loader.style.display = "none";
+        genBtn.disabled = false;
+
+        if (json.data && json.data.image_url) {
+          resultImg.src = json.data.image_url;
+          btnDownload.href = json.data.image_url;
+          resultTitle.innerText = `${json.data.archetype_title || nakshatra + ' Archetype'}`;
+          resultSub.innerText = `${name} • ${nakshatra} Nakshatra`;
+          resultBox.style.display = "block";
+          resultBox.scrollIntoView({ behavior: "smooth" });
+        } else {
+          alert(`Error: ${json.data ? json.data.status : "Failed to generate image"}`);
+        }
+      } catch (err) {
+        loader.style.display = "none";
+        genBtn.disabled = false;
+        alert("Network error: " + err.message);
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", startCamera);
+  </script>
+</body>
+</html>

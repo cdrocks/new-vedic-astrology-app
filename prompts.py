@@ -27,6 +27,7 @@ COMMON_RULES = _load("common")
 
 # Combine common rules + each specific workflow
 WORKFLOWS = {
+    "predictor_2027": COMMON_RULES + "\n\n" + _load("predictor_2027"),
     "career":         COMMON_RULES + "\n\n" + _load("career"),
     "generic_career": COMMON_RULES + "\n\n" + _load("generic_career"),
     "luck":           COMMON_RULES + "\n\n" + _load("luck"),
@@ -156,5 +157,12 @@ def classify_workflow(text: str) -> str:
         "accident", "accidents", "lawsuit", "allegation", "allegations", "enemy", "enemies", "rival"
     ]):
         return "legal"
+
+    # 11. Dedicated 2027 Milestone Window & Annual Predictor
+    if has_match([
+        "2027", "year 2027", "in 2027", "predictor 2027", "milestones 2027",
+        "2027 prediction", "2027 forecast", "what will happen in 2027"
+    ]):
+        return "predictor_2027"
 
     return "general"

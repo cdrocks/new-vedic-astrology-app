@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vedic Astrology · Cosmic Orrery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #dfc691;
+            --gold-bright: #f7e096;
+            --ink: #ece7db;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            background: #000;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            color: var(--ink);
+            touch-action: none;
+        }
+
+        canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Boot screen: silent, elegant, no text */
+        #boot {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+
+        #boot.gone {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .boot-ring {
+            width: 44px;
+            height: 44px;
+            border: 2px solid rgba(223, 198, 145, 0.15);
+            border-top: 2px solid rgba(223, 198, 145, 0.85);
+            border-radius: 50%;
+            animation: bootSpin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes bootSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* The ENTER NOW button */
+        .enter-container {
+            position: fixed;
+            bottom: 54px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            pointer-events: auto;
+            transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-enter {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 44px;
+            background: linear-gradient(135deg, rgba(22, 18, 32, 0.88) 0%, rgba(12, 10, 18, 0.94) 100%);
+            border: 1px solid rgba(223, 198, 145, 0.55);
+            border-radius: 999px;
+            color: #f7ede0;
+            text-decoration: none;
+            font-family: 'Marcellus', 'Inter', serif;
+            font-size: 15px;
+            letter-spacing: 0.38em;
+            text-transform: uppercase;
+            cursor: pointer;
+            overflow: hidden;
+            outline: none;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7), 0 0 28px rgba(212, 175, 55, 0.25), inset 0 0 16px rgba(223, 198, 145, 0.15);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+            touch-action: manipulation;
+        }
+
+        .btn-enter:hover,
+        .btn-enter:focus-visible {
+            transform: scale(1.05);
+            border-color: rgba(247, 224, 150, 0.95);
+            box-shadow: 0 14px 45px rgba(0, 0, 0, 0.8), 0 0 45px rgba(212, 175, 55, 0.45), inset 0 0 22px rgba(247, 224, 150, 0.3);
+        }
+
+        .btn-enter:active {
+            transform: scale(0.97);
+        }
+
+        .btn-enter-glow {
+            position: absolute;
+            inset: -2px;
+            border-radius: 999px;
+            background: radial-gradient(circle at 50% 50%, rgba(223, 198, 145, 0.35), transparent 70%);
+            opacity: 0.6;
+            animation: enterPulse 3s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
+        @keyframes enterPulse {
+            0% { opacity: 0.35; transform: scale(0.96); }
+            100% { opacity: 0.85; transform: scale(1.04); }
+        }
+
+        .btn-enter-shimmer {
+            position: absolute;
+            top: 0;
+            left: -120%;
+            width: 80%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 235, 175, 0.35), transparent);
+            transform: skewX(-25deg);
+            animation: enterShimmer 4s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes enterShimmer {
+            0%, 30% { left: -120%; }
+            70%, 100% { left: 160%; }
+        }
+
+        .btn-enter-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .btn-enter-spark {
+            color: var(--gold);
+            font-size: 13px;
+            line-height: 1;
+        }
+
+        .btn-enter-text {
+            padding-left: 0.38em;
+        }
+
+        @media (max-width: 640px) {
+            .enter-container {
+                bottom: 34px;
+            }
+            .btn-enter {
+                padding: 14px 34px;
+                font-size: 13px;
+                letter-spacing: 0.3em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Silent Minimal Boot Indicator (No Text) -->
+    <div id="boot">
+        <div class="boot-ring"></div>
+    </div>
+
+    <!-- Wake-up / Enter Now Button -->
+    <div class="enter-container" id="enterContainer">
+        <a href="/app" class="btn-enter" id="btnEnterNow" onclick="handleEnter(event)" aria-label="Enter Vedic Astrology Reader">
+            <span class="btn-enter-glow"></span>
+            <span class="btn-enter-shimmer"></span>
+            <span class="btn-enter-content">
+                <span class="btn-enter-spark">✦</span>
+                <span class="btn-enter-text">ENTER NOW</span>
+                <span class="btn-enter-spark">✦</span>
+            </span>
+        </a>
+    </div>
+
+    <script>
+        function handleEnter(e) {
+            e.preventDefault();
+            if (window.location.protocol === 'file:') {
+                window.location.href = 'https://new-vedic-astrology-app-production.up.railway.app/app';
+            } else {
+                window.location.href = '/app';
+            }
+        }
+    </script>
+
+    <script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+        import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+        /* ============================================================ utils */
+        const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+        const lerp = (a, b, t) => a + (b - a) * t;
+        const smoother = u => u * u * u * (u * (u * 6 - 15) + 10);
+        const sm = (a, b, x) => { x = clamp((x - a) / (b - a), 0, 1); return x * x * (3 - 2 * x); };
+        const mix3 = (c1, c2, t) => [c1[0] + (c2[0] - c1[0]) * t, c1[1] + (c2[1] - c1[1]) * t, c1[2] + (c2[2] - c1[2]) * t];
+        const hash2 = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
+
+        function mulberry32(a) {
+            return function () {
+                a |= 0; a = a + 0x6D2B79F5 | 0;
+                let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            };
+        }
+
+        /* ---- 3D simplex noise (Gustavson), seeded ---- */
+        function makeNoise3(rand) {
+            const grad3 = new Float32Array([1, 1, 0, -1, 1, 0, 1, -1, 0, -1, -1, 0, 1, 0, 1, -1, 0, 1, 1, 0, -1, -1, 0, -1, 0, 1, 1, 0, -1, 1, 0, 1, -1, 0, -1, -1]);
+            const p = new Uint8Array(256); for (let i = 0; i < 256; i++)p[i] = i;
+            for (let i = 255; i > 0; i--) { const j = (rand() * (i + 1)) | 0; const t = p[i]; p[i] = p[j]; p[j] = t; }
+            const perm = new Uint8Array(512), pm12 = new Uint8Array(512);
+            for (let i = 0; i < 512; i++) { perm[i] = p[i & 255]; pm12[i] = perm[i] % 12; }
+            const F3 = 1 / 3, G3 = 1 / 6;
+            return function (xin, yin, zin) {
+                let n0, n1, n2, n3;
+                const s = (xin + yin + zin) * F3;
+                const i = Math.floor(xin + s), j = Math.floor(yin + s), k = Math.floor(zin + s);
+                const t = (i + j + k) * G3;
+                const x0 = xin - (i - t), y0 = yin - (j - t), z0 = zin - (k - t);
+                let i1, j1, k1, i2, j2, k2;
+                if (x0 >= y0) {
+                    if (y0 >= z0) { i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 1; k2 = 0; }
+                    else if (x0 >= z0) { i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 0; k2 = 1; }
+                    else { i1 = 0; j1 = 0; k1 = 1; i2 = 1; j2 = 0; k2 = 1; }
+                }
+                else {
+                    if (y0 < z0) { i1 = 0; j1 = 0; k1 = 1; i2 = 0; j2 = 1; k2 = 1; }
+                    else if (x0 < z0) { i1 = 0; j1 = 1; k1 = 0; i2 = 0; j2 = 1; k2 = 1; }
+                    else { i1 = 0; j1 = 1; k1 = 0; i2 = 1; j2 = 1; k2 = 0; }
+                }
+                const x1 = x0 - i1 + G3, y1 = y0 - j1 + G3, z1 = z0 - k1 + G3;
+                const x2 = x0 - i2 + 2 * G3, y2 = y0 - j2 + 2 * G3, z2 = z0 - k2 + 2 * G3;
+                const x3 = x0 - 1 + 3 * G3, y3 = y0 - 1 + 3 * G3, z3 = z0 - 1 + 3 * G3;
+                const ii = i & 255, jj = j & 255, kk = k & 255;
+                let t0 = 0.6 - x0 * x0 - y0 * y0 - z0 * z0;
+                if (t0 < 0) n0 = 0; else { const g = pm12[ii + perm[jj + perm[kk]]] * 3; t0 *= t0; n0 = t0 * t0 * (grad3[g] * x0 + grad3[g + 1] * y0 + grad3[g + 2] * z0); }
+                let t1 = 0.6 - x1 * x1 - y1 * y1 - z1 * z1;
+                if (t1 < 0) n1 = 0; else { const g = pm12[ii + i1 + perm[jj + j1 + perm[kk + k1]]] * 3; t1 *= t1; n1 = t1 * t1 * (grad3[g] * x1 + grad3[g + 1] * y1 + grad3[g + 2] * z1); }
+                let t2 = 0.6 - x2 * x2 - y2 * y2 - z2 * z2;
+                if (t2 < 0) n2 = 0; else { const g = pm12[ii + i2 + perm[jj + j2 + perm[kk + k2]]] * 3; t2 *= t2; n2 = t2 * t2 * (grad3[g] * x2 + grad3[g + 1] * y2 + grad3[g + 2] * z2); }
+                let t3 = 0.6 - x3 * x3 - y3 * y3 - z3 * z3;
+                if (t3 < 0) n3 = 0; else { const g = pm12[ii + 1 + perm[jj + 1 + perm[kk + 1]]] * 3; t3 *= t3; n3 = t3 * t3 * (grad3[g] * x3 + grad3[g + 1] * y3 + grad3[g + 2] * z3); }
+                return 32 * (n0 + n1 + n2 + n3);
+            };
+        }
+        function makeFbm(noise) {
+            return function (x, y, z, oct = 5) {
+                let a = 0.5, f = 1, s = 0, n = 0;
+                for (let i = 0; i < oct; i++) { s += a * noise(x * f, y * f, z * f); n += a; a *= 0.5; f *= 2.02; }
+                return s / n;
+            };
+        }
+        function ramp(stops, t) {
+            t = clamp(t, 0, 1);
+            for (let i = 1; i < stops.length; i++) {
+                if (t <= stops[i][0]) {
+                    const a = stops[i - 1], b = stops[i];
+                    const f = (t - a[0]) / ((b[0] - a[0]) || 1), s = f * f * (3 - 2 * f);
+                    return mix3(a[1], b[1], s);
+                }
+            }
+            return stops[stops.length - 1][1];
+        }
+
+        /* ============================================================ renderer */
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+        renderer.setSize(innerWidth, innerHeight);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.12;
+        document.body.prepend(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 6000);
+
+        scene.add(new THREE.PointLight(0xfff5ea, 3.2, 0, 0));
+        scene.add(new THREE.AmbientLight(0x425068, 0.8));
+        scene.add(new THREE.HemisphereLight(0x566b88, 0x242a36, 0.65));
+
+        const dbs = new THREE.Vector2(); renderer.getDrawingBufferSize(dbs);
+        const rtOpts = { type: THREE.HalfFloatType };
+        if (renderer.capabilities.isWebGL2) rtOpts.samples = 4;
+        const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(dbs.x, dbs.y, rtOpts));
+        composer.setPixelRatio(renderer.getPixelRatio());
+        composer.setSize(innerWidth, innerHeight);
+        composer.addPass(new RenderPass(scene, camera));
+        composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.85, 0.65, 1.0));
+        composer.addPass(new OutputPass());
+
+        const GRADE = {
+            uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uRes: { value: dbs.clone() } },
+            vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+            fragmentShader: `
+    uniform sampler2D tDiffuse; uniform float uTime; uniform vec2 uRes; varying vec2 vUv;
+    float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
+    void main(){
+      vec2 c=vUv-0.5; float r2=dot(c,c);
+      float ca=0.007*r2;
+      vec3 col;
+      col.r=texture2D(tDiffuse,vUv+c*ca).r;
+      col.g=texture2D(tDiffuse,vUv).g;
+      col.b=texture2D(tDiffuse,vUv-c*ca).b;
+      float l=dot(col,vec3(0.299,0.587,0.114));
+      col+=(1.0-smoothstep(0.0,0.55,l))*vec3(-0.010,0.002,0.014);
+      col+=smoothstep(0.55,1.0,l)*vec3(0.022,0.010,-0.014);
+      float vig=smoothstep(0.98,0.30,length(c)*1.18);
+      col*=0.58+0.42*vig;
+      float g=hash(vUv*uRes+vec2(mod(uTime*60.0,997.0)));
+      col+=(g-0.5)*0.032;
+      gl_FragColor=vec4(col,1.0);
+    }`
+        };
+        const grade = new ShaderPass(GRADE);
+        composer.addPass(grade);
+
+        /* ============================================================ GLSL */
+        const SUN_V = `varying vec3 vN; varying vec3 vWP;
+void main(){ vN=normalize(mat3(modelMatrix)*normal);
+  vec4 wp=modelMatrix*vec4(position,1.0); vWP=wp.xyz;
+  gl_Position=projectionMatrix*viewMatrix*wp; }`;
+        const SUN_F = `
+uniform float uTime; varying vec3 vN; varying vec3 vWP;
+float hash(vec3 p){ p=fract(p*0.3183099+0.1); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+float noise(vec3 x){ vec3 i=floor(x); vec3 f=fract(x); f=f*f*(3.0-2.0*f);
+  return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),
+                 mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
+             mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),
+                 mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z); }
+float fbm(vec3 p){ float s=0.0,a=0.5; for(int i=0;i<5;i++){ s+=a*noise(p); p*=2.02; a*=0.5; } return s; }
+void main(){
+  vec3 n=normalize(vN);
+  float t=uTime*0.05;
+  float f1=fbm(n*3.0+vec3(t,t*0.7,-t*0.5));
+  float f2=fbm(n*7.0-vec3(t*1.4,0.0,t));
+  float m=f1*0.72+f2*0.42;
+  vec3 deep=vec3(0.55,0.12,0.02), mid=vec3(1.0,0.45,0.06), hot=vec3(1.0,0.92,0.62);
+  vec3 col=mix(deep,mid,smoothstep(0.25,0.62,m));
+  col=mix(col,hot,smoothstep(0.60,0.85,m));
+  vec3 V=normalize(cameraPosition-vWP);
+  float mu=clamp(dot(n,V),0.0,1.0);
+  col*=0.5+0.62*pow(mu,0.45);
+  col+=hot*pow(1.0-mu,3.0)*0.55;
+  gl_FragColor=vec4(col*1.5,1.0);
+}`;
+
+        const ATM_V = `varying vec3 vWN; varying vec3 vWP;
+void main(){ vWN=normalize(mat3(modelMatrix)*normal);
+  vec4 wp=modelMatrix*vec4(position,1.0); vWP=wp.xyz;
+  gl_Position=projectionMatrix*viewMatrix*wp; }`;
+        const ATM_F = `
+uniform vec3 uColor; uniform vec3 uSunDir; uniform vec3 uCenter; uniform float uMul;
+varying vec3 vWN; varying vec3 vWP;
+void main(){
+  vec3 N=normalize(vWN);
+  vec3 V=normalize(cameraPosition-vWP);
+  float d=dot(N,V);
+  float glow=pow(clamp(0.72-d,0.0,1.5),3.6);
+  float sf=clamp(dot(normalize(vWP-uCenter),uSunDir)*0.6+0.5,0.12,1.0);
+  gl_FragColor=vec4(uColor*glow*uMul*sf,1.0);
+}`;
+
+        const EARTH_V = `varying vec2 vUv; varying vec3 vWN; varying vec3 vWP;
+void main(){ vUv=uv; vWN=normalize(mat3(modelMatrix)*normal);
+  vec4 wp=modelMatrix*vec4(position,1.0); vWP=wp.xyz;
+  gl_Position=projectionMatrix*viewMatrix*wp; }`;
+        const EARTH_F = `
+uniform sampler2D uDay; uniform sampler2D uNight; uniform vec3 uSunDir;
+varying vec2 vUv; varying vec3 vWN; varying vec3 vWP;
+void main(){
+  vec3 N=normalize(vWN);
+  vec3 V=normalize(cameraPosition-vWP);
+  vec3 day=texture2D(uDay,vUv).rgb;
+  float ocean=texture2D(uNight,vUv).a;
+  float ndl=dot(N,uSunDir);
+  float dayF=smoothstep(-0.08,0.22,ndl);
+  vec3 col=day*(0.14+1.20*clamp(ndl,0.0,1.0));
+  vec3 R=reflect(-uSunDir,N);
+  col+=vec3(1.0,0.85,0.6)*pow(max(dot(R,V),0.0),48.0)*ocean*dayF*0.9;
+  col+=texture2D(uNight,vUv).rgb*(1.0-dayF)*2.2;
+  float rim=pow(1.0-clamp(dot(N,V),0.0,1.0),3.0);
+  col+=vec3(0.28,0.55,1.0)*rim*(0.24+0.5*dayF);
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+        const STAR_V = `
+attribute float aSize; attribute vec3 aColor; attribute float aPhase; attribute float aSpd;
+uniform float uTime; varying vec3 vC; varying float vA;
+void main(){
+  vC=aColor;
+  vA=0.7+0.3*sin(uTime*aSpd+aPhase);
+  gl_PointSize=aSize;
+  gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);
+}`;
+        const STAR_F = `
+varying vec3 vC; varying float vA;
+void main(){
+  float d=length(gl_PointCoord-0.5)*2.0;
+  float a=pow(clamp(1.0-d,0.0,1.0),2.4)*vA;
+  gl_FragColor=vec4(vC*1.05,a);
+}`;
+        const BELT_F = `
+varying vec3 vC; varying float vA;
+void main(){
+  float d=length(gl_PointCoord-0.5)*2.0;
+  float a=pow(clamp(1.0-d,0.0,1.0),1.8)*vA;
+  if(a<0.01) discard;
+  gl_FragColor=vec4(vC,a);
+}`;
+
+        /* ============================================================ texture forges */
+        const OUT = [0, 0, 0, 255];
+        function genTexture(w, h, fn) {
+            const c = document.createElement('canvas'); c.width = w; c.height = h;
+            const ctx = c.getContext('2d');
+            const img = ctx.createImageData(w, h), d = img.data;
+            const cosT = new Float32Array(w), sinT = new Float32Array(w);
+            for (let x = 0; x < w; x++) { const th = x / w * Math.PI * 2; cosT[x] = Math.cos(th); sinT[x] = Math.sin(th); }
+            for (let y = 0; y < h; y++) {
+                const v = y / h, phi = v * Math.PI, sp = Math.sin(phi), cp = Math.cos(phi);
+                for (let x = 0; x < w; x++) {
+                    OUT[0] = 0; OUT[1] = 0; OUT[2] = 0; OUT[3] = 255;
+                    fn(x / w, v, cosT[x] * sp, cp, sinT[x] * sp, OUT, x, y);
+                    const o = (y * w + x) * 4;
+                    d[o] = OUT[0]; d[o + 1] = OUT[1]; d[o + 2] = OUT[2]; d[o + 3] = OUT[3];
+                }
+            }
+            ctx.putImageData(img, 0, 0);
+            return c;
+        }
+        function toTex(c) {
+            const t = new THREE.CanvasTexture(c);
+            t.colorSpace = THREE.SRGBColorSpace;
+            t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+            return t;
+        }
+        function drawCrater(ctx, x, y, r, s, rand) {
+            const rr = r * (0.75 + rand() * 0.5);
+            const g = ctx.createRadialGradient(x, y, rr * 0.1, x, y, rr);
+            g.addColorStop(0, `rgba(0,0,0,${0.34 * s})`);
+            g.addColorStop(0.62, `rgba(0,0,0,${0.16 * s})`);
+            g.addColorStop(0.78, 'rgba(0,0,0,0)');
+            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.2832); ctx.fill();
+            ctx.strokeStyle = `rgba(255,250,240,${0.10 * s})`;
+            ctx.lineWidth = Math.max(1, rr * 0.16);
+            ctx.beginPath(); ctx.arc(x, y, rr * 0.86, 0, 6.2832); ctx.stroke();
+        }
+        function addCraters(ctx, w, h, n, rand, rMin, rMax, s) {
+            for (let i = 0; i < n; i++) {
+                const u = rand(), vv = 0.06 + 0.88 * rand();
+                const r = rMin + Math.pow(rand(), 2.4) * (rMax - rMin);
+                const x = u * w, y = vv * h;
+                const k = 1 / Math.max(0.4, Math.sin(vv * Math.PI));
+                const one = xx => { ctx.save(); ctx.translate(xx, y); ctx.scale(k, 1); drawCrater(ctx, 0, 0, r, s, rand); ctx.restore(); };
+                one(x); if (x < r * k) one(x + w); if (x > w - r * k) one(x - w);
+            }
+        }
+
+        function texMercury() {
+            const R = mulberry32(11), N = makeNoise3(R), F = makeFbm(N);
+            const c = genTexture(1024, 512, (u, v, x, y, z) => {
+                const g = 0.5 + F(x * 3.2, y * 3.2, z * 3.2, 5) * 0.34 + F(x * 8 + 5, y * 8, z * 8, 4) * 0.16;
+                const cc = mix3([92, 86, 80], [172, 164, 152], g);
+                OUT[0] = cc[0] * 1.03; OUT[1] = cc[1]; OUT[2] = cc[2] * 0.97;
+            });
+            const ctx = c.getContext('2d');
+            const R2 = mulberry32(12);
+            addCraters(ctx, 1024, 512, 150, R2, 2, 20, 0.85);
+            for (let i = 0; i < 3; i++) drawCrater(ctx, R2() * 1024, (0.2 + 0.6 * R2()) * 512, 34 + R2() * 16, 0.5, R2);
+            return c;
+        }
+        function texVenus() {
+            const R = mulberry32(21), N = makeNoise3(R), F = makeFbm(N);
+            return genTexture(768, 384, (u, v, x, y, z) => {
+                const w1 = F(x * 1.9, y * 1.9, z * 1.9, 4), w2 = F(x * 4.5 + 9, y * 4.5, z * 4.5, 3);
+                const s = 0.5 + 0.5 * Math.sin((v * 4.2 + w1 * 1.4 + w2 * 0.35) * Math.PI);
+                let c = mix3([176, 136, 84], [242, 226, 190], s);
+                c = mix3(c, [255, 244, 214], sm(0.6, 0.95, w2) * 0.5);
+                c = mix3(c, [150, 118, 76], sm(0.82, 0.98, Math.abs(y)) * 0.5);
+                const d = 1 + 0.05 * F(x * 9, y * 9, z * 9, 3);
+                OUT[0] = c[0] * d; OUT[1] = c[1] * d; OUT[2] = c[2] * d;
+            });
+        }
+        function texEarthPair() {
+            const R = mulberry32(31), N = makeNoise3(R), F = makeFbm(N);
+            const night = new Float32Array(1024 * 512 * 3);
+            const day = genTexture(1024, 512, (u, v, x, y, z, o, px, py) => {
+                const e1 = F(x * 1.35, y * 1.35, z * 1.35, 5), e2 = F(x * 4.3 + 7.1, y * 4.3, z * 4.3, 4);
+                const e = e1 * 0.72 + e2 * 0.28, sea = 0.05, lat = Math.abs(y), h = Math.max(0, e - sea);
+                const iceN = F(x * 3.3 + 31, y * 3.3, z * 3.3, 3);
+                const capF = sm(0.80 + iceN * 0.05, 0.88 + iceN * 0.05, lat);
+                let c, oceanMask = 0;
+                if (e <= sea) {
+                    c = mix3([36, 92, 128], [8, 26, 56], sm(0, 0.28, sea - e));
+                    const ov = 1 + 0.06 * F(x * 6 + 3, y * 6, z * 6, 3);
+                    c = [c[0] * ov, c[1] * ov, c[2] * ov]; oceanMask = 255;
+                } else {
+                    const moist = F(x * 2.6 + 13, y * 2.6, z * 2.6, 4);
+                    c = mix3([64, 100, 58], [158, 140, 94], sm(-0.15, 0.35, moist));
+                    c = mix3(c, [126, 112, 92], sm(0.14, 0.30, h));
+                    c = mix3(c, [214, 218, 214], sm(0.30, 0.44, h));
+                }
+                if (capF > 0) { c = mix3(c, [228, 236, 242], capF); oceanMask *= (1 - capF); }
+                o[0] = c[0]; o[1] = c[1]; o[2] = c[2]; o[3] = 255;
+                let nb = 0;
+                if (e > sea && capF < 0.5 && lat < 0.78) {
+                    const cityN = F(x * 4.2 + 23.7, y * 4.2, z * 4.2, 3);
+                    const coast = Math.max(0, 1 - h * 9);
+                    const dens = sm(0.34, 0.75, cityN) * (0.55 + 0.45 * coast) * sm(0.78, 0.45, lat);
+                    if (hash2(px, py) < dens * 0.55) nb = 0.4 + 0.6 * hash2(px + 9.1, py + 3.3);
+                    nb = Math.max(nb, Math.max(0, cityN - 0.25) * 0.35);
+                }
+                const i3 = (py * 1024 + px) * 3;
+                night[i3] = 255 * nb; night[i3 + 1] = 205 * nb; night[i3 + 2] = 130 * nb;
+            });
+            const nc = document.createElement('canvas'); nc.width = 1024; nc.height = 512;
+            const nctx = nc.getContext('2d'), nimg = nctx.createImageData(1024, 512);
+            for (let i = 0; i < 1024 * 512; i++) {
+                nimg.data[i * 4] = night[i * 3]; nimg.data[i * 4 + 1] = night[i * 3 + 1]; nimg.data[i * 4 + 2] = night[i * 3 + 2];
+                nimg.data[i * 4 + 3] = 255;
+            }
+            const F2 = F;
+            for (let py = 0; py < 512; py++) {
+                const v = py / 512, phi = v * Math.PI, sp = Math.sin(phi), cp = Math.cos(phi);
+                for (let px = 0; px < 1024; px++) {
+                    const th = px / 1024 * Math.PI * 2;
+                    const x = Math.cos(th) * sp, y = cp, z = Math.sin(th) * sp;
+                    const e = F2(x * 1.35, y * 1.35, z * 1.35, 5) * 0.72 + F2(x * 4.3 + 7.1, y * 4.3, z * 4.3, 4) * 0.28;
+                    const lat = Math.abs(y), iceN = F2(x * 3.3 + 31, y * 3.3, z * 3.3, 3);
+                    const capF = sm(0.80 + iceN * 0.05, 0.88 + iceN * 0.05, lat);
+                    nimg.data[(py * 1024 + px) * 4 + 3] = (e <= 0.05 && capF < 0.5) ? 255 : 0;
+                }
+            }
+            nctx.putImageData(nimg, 0, 0);
+            const clouds = genTexture(768, 384, (u, v, x, y, z, o) => {
+                const q = F(x * 1.7, y * 4.2, z * 1.7, 5) + 0.45 * F(x * 5.5, y * 9, z * 5.5, 4);
+                o[0] = 255; o[1] = 255; o[2] = 255; o[3] = Math.round(sm(0.10, 0.68, q) * 235);
+            });
+            return { day, night: nc, clouds };
+        }
+        function texMoon() {
+            const R = mulberry32(41), N = makeNoise3(R), F = makeFbm(N);
+            const c = genTexture(1024, 512, (u, v, x, y, z, o) => {
+                const g = 0.5 + F(x * 3.4, y * 3.4, z * 3.4, 5) * 0.30 + F(x * 9 + 2, y * 9, z * 9, 4) * 0.15;
+                const cc = mix3([124, 122, 118], [200, 198, 192], g);
+                o[0] = cc[0]; o[1] = cc[1]; o[2] = cc[2];
+            });
+            const ctx = c.getContext('2d'), R2 = mulberry32(42);
+            for (let i = 0; i < 9; i++) {
+                const x = R2() * 1024, y = (0.2 + 0.6 * R2()) * 512, r = 40 + R2() * 110;
+                const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+                g.addColorStop(0, 'rgba(56,58,64,0.34)'); g.addColorStop(0.7, 'rgba(56,58,64,0.18)');
+                g.addColorStop(1, 'rgba(56,58,64,0)');
+                ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill();
+            }
+            addCraters(ctx, 1024, 512, 130, R2, 2, 16, 0.8);
+            const tx = 0.3 * 1024, ty = 0.72 * 512;
+            drawCrater(ctx, tx, ty, 10, 1, R2);
+            ctx.lineWidth = 1.4;
+            for (let i = 0; i < 26; i++) {
+                const a = R2() * 6.2832, l = 40 + R2() * 180;
+                ctx.strokeStyle = `rgba(230,228,222,${0.04 + R2() * 0.05})`;
+                ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx + Math.cos(a) * l, ty + Math.sin(a) * l * 0.7); ctx.stroke();
+            }
+            return c;
+        }
+        function texMars() {
+            const R = mulberry32(51), N = makeNoise3(R), F = makeFbm(N);
+            const c = genTexture(1024, 512, (u, v, x, y, z, o) => {
+                const t = 0.5 + F(x * 2.3, y * 2.3, z * 2.3, 5) * 0.55 + F(x * 6.5 + 4, y * 6.5, z * 6.5, 4) * 0.22;
+                let cc = mix3([122, 62, 38], [200, 128, 84], t);
+                const dark = F(x * 1.4 + 9, y * 1.4, z * 1.4, 3);
+                cc = mix3(cc, [74, 42, 28], sm(0.18, 0.5, dark) * 0.55);
+                cc = mix3(cc, [232, 226, 216], sm(0.88, 0.95, Math.abs(y) + F(x * 5, y * 5, z * 5, 3) * 0.03));
+                o[0] = cc[0]; o[1] = cc[1]; o[2] = cc[2];
+            });
+            addCraters(c.getContext('2d'), 1024, 512, 70, mulberry32(52), 2, 9, 0.4);
+            return c;
+        }
+        const JUP = [[0, [164, 148, 124]], [0.06, [186, 166, 138]], [0.12, [150, 116, 88]], [0.20, [226, 210, 182]],
+        [0.28, [172, 134, 100]], [0.36, [232, 220, 196]], [0.44, [148, 96, 64]], [0.50, [236, 226, 206]],
+        [0.58, [176, 122, 86]], [0.66, [224, 208, 180]], [0.74, [168, 138, 108]], [0.84, [198, 178, 150]], [1, [158, 140, 116]]];
+        function texJupiter() {
+            const R = mulberry32(61), N = makeNoise3(R), F = makeFbm(N);
+            return genTexture(1024, 512, (u, v, x, y, z, o) => {
+                const warp = F(x * 2.5, y * 5.5, z * 2.5, 5) * 0.06 + F(x * 6, y * 12, z * 6, 4) * 0.02;
+                let c = ramp(JUP, v + warp);
+                const turb = F(x * 10, y * 22, z * 10, 4);
+                c = c.map(q => q * (0.93 + 0.10 * turb));
+                let du = u - 0.72; du -= Math.round(du);
+                const dd = (du / 0.075) * (du / 0.075) + ((v - 0.64) / 0.07) * ((v - 0.64) / 0.07);
+                if (dd < 1) {
+                    const s = Math.pow(1 - dd, 0.65);
+                    c = mix3(c, [176, 84, 54], Math.min(1, s * 1.35));
+                    const sw = 0.5 + 0.5 * Math.sin(dd * 12 - 1.5);
+                    c = c.map(q => q * (0.92 + 0.16 * sw * s));
+                } else if (dd < 1.9) {
+                    c = mix3(c, [236, 226, 206], 0.25 * (1 - (dd - 1) / 0.9));
+                }
+                c = c.map(q => q * (1 - 0.25 * Math.pow(Math.abs(v - 0.5) * 2, 3)));
+                o[0] = c[0]; o[1] = c[1]; o[2] = c[2];
+            });
+        }
+        const SAT = [[0, [138, 124, 96]], [0.10, [178, 160, 124]], [0.22, [210, 192, 152]], [0.35, [226, 210, 172]],
+        [0.50, [232, 218, 180]], [0.62, [214, 196, 156]], [0.75, [192, 172, 132]], [0.88, [164, 146, 110]], [1, [138, 124, 96]]];
+        function texSaturn() {
+            const R = mulberry32(71), N = makeNoise3(R), F = makeFbm(N);
+            return genTexture(768, 384, (u, v, x, y, z, o) => {
+                const c = ramp(SAT, v + F(x * 2, y * 4, z * 2, 4) * 0.04);
+                const d = 0.95 + 0.08 * F(x * 8, y * 16, z * 8, 3);
+                o[0] = c[0] * d; o[1] = c[1] * d; o[2] = c[2] * d;
+            });
+        }
+        function texUranus() {
+            const R = mulberry32(81), N = makeNoise3(R), F = makeFbm(N);
+            return genTexture(640, 320, (u, v, x, y, z, o) => {
+                let c = mix3([138, 192, 200], [170, 218, 224], 0.5 + 0.5 * F(x * 1.6, y * 1.6, z * 1.6, 4));
+                const b = 0.97 + 0.05 * Math.sin(v * Math.PI * 7 + F(x * 2, y * 2, z * 2, 3) * 2);
+                c = mix3(c.map(q => q * b), [120, 178, 188], sm(0.75, 1.0, Math.abs(v - 0.5) * 2) * 0.4);
+                o[0] = c[0]; o[1] = c[1]; o[2] = c[2];
+            });
+        }
+        const NEP = [[0, [38, 62, 150]], [0.25, [52, 92, 198]], [0.5, [36, 64, 152]], [0.72, [58, 102, 208]], [1, [34, 56, 136]]];
+        function texNeptune() {
+            const R = mulberry32(91), N = makeNoise3(R), F = makeFbm(N);
+            return genTexture(640, 320, (u, v, x, y, z, o) => {
+                let c = ramp(NEP, v + F(x * 2.2, y * 3.2, z * 2.2, 4) * 0.06);
+                c = mix3(c, [218, 230, 252], sm(0.48, 0.68, F(x * 1.3, y * 1.3, z * 9 + 5, 4)) * 0.55);
+                let du = u - 0.32; du -= Math.round(du);
+                const dd = (du / 0.10) * (du / 0.10) + ((v - 0.40) / 0.09) * ((v - 0.40) / 0.09);
+                if (dd < 1) c = mix3(c, [18, 36, 96], Math.pow(1 - dd, 0.7) * 0.85);
+                o[0] = c[0]; o[1] = c[1]; o[2] = c[2];
+            });
+        }
+        function ringProfileCanvas(noise3) {
+            const w = 1024, h = 8, c = document.createElement('canvas'); c.width = w; c.height = h;
+            const ctx = c.getContext('2d'), img = ctx.createImageData(w, h);
+            const band = (t, a, b, f) => sm(a - f, a + f, t) * (1 - sm(b - f, b + f, t));
+            for (let x = 0; x < w; x++) {
+                const t = x / w;
+                let a = band(t, 0.00, 0.14, 0.03) * 0.22
+                    + band(t, 0.15, 0.50, 0.02) * 0.85
+                    + band(t, 0.56, 0.88, 0.015) * 0.55;
+                a *= 1 - band(t, 0.505, 0.555, 0.012) * 0.92;
+                a *= 1 - band(t, 0.855, 0.865, 0.004) * 0.85;
+                a *= (0.8 + 0.2 * noise3(t * 140, 11.3, 7.7)) * (0.86 + 0.14 * noise3(t * 47 + 9, 5.2, 1.1));
+                a *= sm(0, 0.015, t) * sm(1, 0.97, t);
+                const b = 0.75 + 0.3 * noise3(t * 23 + 40, 8.8, 2.2);
+                for (let y = 0; y < h; y++) {
+                    const o = (y * w + x) * 4;
+                    img.data[o] = 216 * b; img.data[o + 1] = 203 * b; img.data[o + 2] = 178 * b;
+                    img.data[o + 3] = clamp(a, 0, 1) * 255;
+                }
+            }
+            ctx.putImageData(img, 0, 0);
+            return c;
+        }
+        function uranusRingCanvas() {
+            const w = 256, h = 4, c = document.createElement('canvas'); c.width = w; c.height = h;
+            const ctx = c.getContext('2d'), img = ctx.createImageData(w, h);
+            for (let x = 0; x < w; x++) {
+                const t = x / w;
+                const a = 0.55 * Math.exp(-Math.pow((t - 0.78) / 0.045, 2)) + 0.14 * sm(0.0, 0.1, t) * (1 - sm(0.5, 0.6, t));
+                for (let y = 0; y < h; y++) {
+                    const o = (y * w + x) * 4;
+                    img.data[o] = 170; img.data[o + 1] = 196; img.data[o + 2] = 200; img.data[o + 3] = clamp(a, 0, 1) * 255;
+                }
+            }
+            ctx.putImageData(img, 0, 0);
+            return c;
+        }
+
+        /* ============================================================ scene assembly */
+        const anchors = {}, planets = [], shellsArr = [];
+        let sunMesh, sunMat, earthMat, moonAnchor, moonMesh, moonPivot;
+        let starMat, beltGroup, beltPt, coronaSprites = [];
+
+        function orbitLine(radius, op) {
+            const pts = new Float32Array(256 * 3);
+            for (let i = 0; i < 256; i++) {
+                const a = i / 256 * Math.PI * 2;
+                pts[i * 3] = Math.cos(a) * radius; pts[i * 3 + 2] = Math.sin(a) * radius;
+            }
+            const g = new THREE.BufferGeometry();
+            g.setAttribute('position', new THREE.BufferAttribute(pts, 3));
+            return new THREE.LineLoop(g, new THREE.LineBasicMaterial({ color: 0x93a4bd, transparent: true, opacity: op }));
+        }
+        function ringMesh(inner, outer, canvas) {
+            const geo = new THREE.RingGeometry(inner, outer, 180, 1);
+            const pos = geo.attributes.position, uv = geo.attributes.uv;
+            for (let i = 0; i < pos.count; i++) {
+                const r = Math.hypot(pos.getX(i), pos.getY(i));
+                uv.setXY(i, (r - inner) / (outer - inner), 0.5);
+            }
+            const t = toTex(canvas);
+            const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: t, side: THREE.DoubleSide, transparent: true, depthWrite: false }));
+            m.rotation.x = -Math.PI / 2;
+            return m;
+        }
+        function softSpriteTex() {
+            const c = document.createElement('canvas'); c.width = c.height = 128;
+            const ctx = c.getContext('2d');
+            const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+            g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.4, 'rgba(255,255,255,0.35)');
+            g.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 128);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function buildStars() {
+            const pr = renderer.getPixelRatio();
+            const pal = [[0.81, 0.85, 1], [1, 1, 1], [1, 0.96, 0.88], [1, 0.86, 0.70], [1, 0.77, 0.56]];
+            const pw = [3, 4, 2.2, 1.6, 0.7];
+            const pick = () => {
+                let r = Math.random() * 10.5, s = 0;
+                for (let i = 0; i < pal.length; i++) { s += pw[i]; if (r <= s) return pal[i]; } return pal[1];
+            };
+            const mk = (count, fill) => {
+                const pos = new Float32Array(count * 3), col = new Float32Array(count * 3),
+                    siz = new Float32Array(count), ph = new Float32Array(count), sp = new Float32Array(count);
+                for (let i = 0; i < count; i++) fill(i, pos, col, siz, ph, sp);
+                const g = new THREE.BufferGeometry();
+                g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+                g.setAttribute('aColor', new THREE.BufferAttribute(col, 3));
+                g.setAttribute('aSize', new THREE.BufferAttribute(siz, 1));
+                g.setAttribute('aPhase', new THREE.BufferAttribute(ph, 1));
+                g.setAttribute('aSpd', new THREE.BufferAttribute(sp, 1));
+                return g;
+            };
+            const dir = (v) => {
+                const z = Math.random() * 2 - 1, a = Math.random() * 6.2832, r = Math.sqrt(1 - z * z);
+                v[0] = r * Math.cos(a); v[1] = z; v[2] = r * Math.sin(a);
+            };
+            const gauss = () => Math.random() + Math.random() + Math.random() - 1.5;
+
+            const g1 = mk(4500, (i, pos, col, siz, ph, sp) => {
+                const v = [0, 0, 0]; dir(v);
+                const R = 1750 + Math.random() * 950;
+                pos[i * 3] = v[0] * R; pos[i * 3 + 1] = v[1] * R; pos[i * 3 + 2] = v[2] * R;
+                const c = pick(); col[i * 3] = c[0]; col[i * 3 + 1] = c[1]; col[i * 3 + 2] = c[2];
+                siz[i] = (Math.random() < 0.6 ? 0.8 + Math.random() * 1.2 : Math.random() < 0.85 ? 2 + Math.random() * 1.2 : 3.2 + Math.random() * 1.8) * pr;
+                ph[i] = Math.random() * 6.2832; sp[i] = 0.5 + Math.random() * 2.2;
+            });
+
+            const n = new THREE.Vector3(0.52, 0.62, 0.58).normalize();
+            const u = new THREE.Vector3(1, 0, 0).cross(n).normalize();
+            const w2 = new THREE.Vector3().crossVectors(n, u);
+            const g2 = mk(3800, (i, pos, col, siz, ph, sp) => {
+                const a = Math.random() * 6.2832;
+                const d = new THREE.Vector3().addScaledVector(u, Math.cos(a)).addScaledVector(w2, Math.sin(a))
+                    .addScaledVector(n, gauss() * 0.16).normalize();
+                const R = 1700 + Math.random() * 1000;
+                pos[i * 3] = d.x * R; pos[i * 3 + 1] = d.y * R; pos[i * 3 + 2] = d.z * R;
+                const c = pick(); col[i * 3] = c[0]; col[i * 3 + 1] = c[1]; col[i * 3 + 2] = c[2];
+                siz[i] = (0.7 + Math.random() * 1.6) * pr;
+                ph[i] = Math.random() * 6.2832; sp[i] = 0.4 + Math.random() * 1.8;
+            });
+            starMat = new THREE.ShaderMaterial({
+                uniforms: { uTime: { value: 0 } }, vertexShader: STAR_V, fragmentShader: STAR_F,
+                transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+            });
+            scene.add(new THREE.Points(g1, starMat));
+            scene.add(new THREE.Points(g2, starMat));
+
+            const nebTex = softSpriteTex();
+            const tints = [0x31435a, 0x3a4b63, 0x2e3f52, 0x4e5a6b, 0x5a4f43];
+            for (let i = 0; i < 34; i++) {
+                const a = Math.random() * 6.2832;
+                const d = new THREE.Vector3().addScaledVector(u, Math.cos(a)).addScaledVector(w2, Math.sin(a))
+                    .addScaledVector(n, gauss() * 0.06).normalize();
+                const m = new THREE.SpriteMaterial({
+                    map: nebTex, color: tints[i % tints.length], transparent: true,
+                    opacity: 0.04 + Math.random() * 0.05, blending: THREE.AdditiveBlending, depthWrite: false, rotation: Math.random() * 6.28
+                });
+                const s = new THREE.Sprite(m);
+                s.position.copy(d).multiplyScalar(1850);
+                const sc = 260 + Math.random() * 420; s.scale.set(sc, sc, 1);
+                scene.add(s);
+            }
+        }
+        function buildSun() {
+            sunMat = new THREE.ShaderMaterial({ uniforms: { uTime: { value: 0 } }, vertexShader: SUN_V, fragmentShader: SUN_F });
+            sunMesh = new THREE.Mesh(new THREE.SphereGeometry(15, 64, 48), sunMat);
+            scene.add(sunMesh);
+            const c = document.createElement('canvas'); c.width = c.height = 256;
+            const ctx = c.getContext('2d');
+            const g = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+            g.addColorStop(0, 'rgba(255,244,224,1)'); g.addColorStop(0.18, 'rgba(255,210,140,0.55)');
+            g.addColorStop(0.45, 'rgba(255,150,60,0.16)'); g.addColorStop(1, 'rgba(255,120,40,0)');
+            ctx.fillStyle = g; ctx.fillRect(0, 0, 256, 256);
+            const t = new THREE.CanvasTexture(c);
+            [[64, 0.95], [145, 0.32]].forEach(([sc, op]) => {
+                const m = new THREE.SpriteMaterial({
+                    map: t, transparent: true, opacity: op, depthWrite: false,
+                    blending: THREE.AdditiveBlending, color: new THREE.Color(1.35, 1.15, 0.95)
+                });
+                const s = new THREE.Sprite(m); s.scale.set(sc, sc, 1); scene.add(s); coronaSprites.push(m);
+            });
+        }
+
+        const CFG = [
+            { key: 'mercury', r: 1.45, dist: 34, spin: 0.030, tilt: 0.01, inc: [0.10, 0.03] },
+            { key: 'venus', r: 2.35, dist: 47, spin: -0.012, tilt: 3.09, inc: [0.05, 0.02] },
+            { key: 'earth', r: 2.55, dist: 63, spin: 0.140, tilt: 0.41, inc: [0.00, 0.00] },
+            { key: 'mars', r: 1.95, dist: 80, spin: 0.130, tilt: 0.44, inc: [0.05, 0.03] },
+            { key: 'jupiter', r: 7.8, dist: 138, spin: 0.300, tilt: 0.06, inc: [0.03, 0.02] },
+            { key: 'saturn', r: 6.7, dist: 184, spin: 0.270, tilt: 0.47, inc: [0.06, 0.04] },
+            { key: 'uranus', r: 4.1, dist: 228, spin: 0.200, tilt: 1.71, inc: [0.04, 0.02] },
+            { key: 'neptune', r: 3.95, dist: 266, spin: 0.220, tilt: 0.49, inc: [0.05, 0.03] },
+        ];
+        const SHELLS = {
+            venus: { c: 0xd8c290, m: 0.55, s: 1.14 }, earth: { c: 0x3f6fd9, m: 1.0, s: 1.16 },
+            mars: { c: 0xc08060, m: 0.35, s: 1.12 }, jupiter: { c: 0xd8c0a0, m: 0.4, s: 1.09 },
+            saturn: { c: 0xe0d0a8, m: 0.35, s: 1.09 }, uranus: { c: 0x9fd8dd, m: 0.55, s: 1.12 },
+            neptune: { c: 0x4f7fe8, m: 0.7, s: 1.13 },
+        };
+        const spd = d => 0.065 * Math.pow(63 / d, 1.25);
+
+        function buildMoon(earthAnchor, canvas) {
+            moonPivot = new THREE.Group(); moonPivot.rotation.x = 0.09; earthAnchor.add(moonPivot);
+            moonPivot.add(orbitLine(6.2, 0.05));
+            moonAnchor = new THREE.Group(); moonPivot.add(moonAnchor);
+            moonMesh = new THREE.Mesh(new THREE.SphereGeometry(0.7, 48, 32),
+                new THREE.MeshStandardMaterial({ map: toTex(canvas), roughness: 0.85, metalness: 0.05 }));
+            moonAnchor.add(moonMesh);
+        }
+        function buildPlanet(cfg, map, extra = {}) {
+            const plane = new THREE.Group();
+            plane.rotation.x = cfg.inc[0]; plane.rotation.z = cfg.inc[1];
+            scene.add(plane);
+            plane.add(orbitLine(cfg.dist, 0.07));
+            const anchor = new THREE.Group(); plane.add(anchor); anchors[cfg.key] = anchor;
+            const tiltG = new THREE.Group(); tiltG.rotation.z = cfg.tilt; anchor.add(tiltG);
+            let mesh;
+            if (cfg.key === 'earth') {
+                earthMat = new THREE.ShaderMaterial({
+                    uniforms: { uDay: { value: toTex(map.day) }, uNight: { value: toTex(map.night) }, uSunDir: { value: new THREE.Vector3(1, 0, 0) } },
+                    vertexShader: EARTH_V, fragmentShader: EARTH_F
+                });
+                mesh = new THREE.Mesh(new THREE.SphereGeometry(cfg.r, 64, 44), earthMat);
+            } else {
+                mesh = new THREE.Mesh(new THREE.SphereGeometry(cfg.r, 64, 44),
+                    new THREE.MeshStandardMaterial({ map: toTex(map), roughness: 0.85, metalness: 0.05 }));
+            }
+            tiltG.add(mesh);
+            const p = { cfg, anchor, mesh, angle: Math.random() * Math.PI * 2 };
+            if (extra.clouds) {
+                const cm = new THREE.Mesh(new THREE.SphereGeometry(cfg.r * 1.02, 48, 32),
+                    new THREE.MeshLambertMaterial({ map: toTex(extra.clouds), transparent: true, depthWrite: false }));
+                cm.renderOrder = 1; tiltG.add(cm); p.clouds = cm;
+            }
+            const sh = SHELLS[cfg.key];
+            if (sh) {
+                const smat = new THREE.ShaderMaterial({
+                    uniforms: {
+                        uColor: { value: new THREE.Color(sh.c) }, uSunDir: { value: new THREE.Vector3(1, 0, 0) },
+                        uCenter: { value: new THREE.Vector3() }, uMul: { value: sh.m }
+                    },
+                    vertexShader: ATM_V, fragmentShader: ATM_F, side: THREE.BackSide,
+                    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+                });
+                const shm = new THREE.Mesh(new THREE.SphereGeometry(cfg.r * sh.s, 48, 32), smat);
+                shm.renderOrder = 3; tiltG.add(shm);
+                shellsArr.push({ mesh: shm, mat: smat });
+            }
+            if (extra.ring) {
+                const rm = ringMesh(extra.ring.inner, extra.ring.outer, extra.ring.canvas);
+                rm.renderOrder = 2; tiltG.add(rm);
+            }
+            if (cfg.key === 'earth') buildMoon(anchor, extra.moon);
+            planets.push(p);
+        }
+        function buildBelt() {
+            beltGroup = new THREE.Group(); scene.add(beltGroup);
+            const n = 2600, pr = renderer.getPixelRatio();
+            const pos = new Float32Array(n * 3), col = new Float32Array(n * 3),
+                siz = new Float32Array(n), ph = new Float32Array(n), sp = new Float32Array(n);
+            for (let i = 0; i < n; i++) {
+                const a = Math.random() * 6.2832;
+                const r = 111 + (Math.random() + Math.random() + Math.random() - 1.5) * 14;
+                pos[i * 3] = Math.cos(a) * r;
+                pos[i * 3 + 1] = (Math.random() + Math.random() + Math.random() + Math.random() - 2) * 1.6;
+                pos[i * 3 + 2] = Math.sin(a) * r;
+                const g = 0.45 + Math.random() * 0.35;
+                col[i * 3] = g; col[i * 3 + 1] = g * 0.96; col[i * 3 + 2] = g * 0.9;
+                siz[i] = (1 + Math.random() * 2.4) * pr;
+                ph[i] = Math.random() * 6.2832; sp[i] = 0;
+            }
+            const g = new THREE.BufferGeometry();
+            g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            g.setAttribute('aColor', new THREE.BufferAttribute(col, 3));
+            g.setAttribute('aSize', new THREE.BufferAttribute(siz, 1));
+            g.setAttribute('aPhase', new THREE.BufferAttribute(ph, 1));
+            g.setAttribute('aSpd', new THREE.BufferAttribute(sp, 1));
+            const m = new THREE.ShaderMaterial({
+                uniforms: { uTime: { value: 0 } }, vertexShader: STAR_V, fragmentShader: BELT_F,
+                transparent: true, depthWrite: false
+            });
+            beltGroup.add(new THREE.Points(g, m));
+            beltPt = new THREE.Vector3(105 * Math.cos(1.2), 1.5, 105 * Math.sin(1.2));
+        }
+
+        /* ============================================================ director */
+        const SUBJ = {
+            sun: { w: 1.0, dist: 62, phi: [0.08, 0.40], styles: ['random'], pos: v => v.set(0, 0, 0) },
+            mercury: { w: 0.6, dist: 9.5, styles: ['side', 'front', 'threequarter'], pos: v => anchors.mercury.getWorldPosition(v) },
+            venus: { w: 0.95, dist: 14, styles: ['side', 'front', 'threequarter'], pos: v => anchors.venus.getWorldPosition(v) },
+            earth: { w: 1.3, dist: 15, styles: ['side', 'front', 'threequarter'], pos: v => anchors.earth.getWorldPosition(v) },
+            luna: { w: 0.5, dist: 4.2, styles: ['side', 'front', 'threequarter'], pos: v => moonAnchor.getWorldPosition(v) },
+            mars: { w: 0.95, dist: 11, styles: ['side', 'front', 'threequarter'], pos: v => anchors.mars.getWorldPosition(v) },
+            jupiter: { w: 1.25, dist: 26, styles: ['side', 'front', 'threequarter'], pos: v => anchors.jupiter.getWorldPosition(v) },
+            saturn: { w: 1.35, dist: 24, styles: ['side', 'edge', 'front', 'threequarter'], pos: v => anchors.saturn.getWorldPosition(v) },
+            uranus: { w: 0.75, dist: 17, styles: ['side', 'front', 'threequarter'], pos: v => anchors.uranus.getWorldPosition(v) },
+            neptune: { w: 0.85, dist: 16, styles: ['side', 'front', 'threequarter'], pos: v => anchors.neptune.getWorldPosition(v) },
+            belt: { w: 0.55, dist: 64, phi: [0.15, 0.5], styles: ['random'], pos: v => v.copy(beltPt) },
+            system: { w: 0.75, dist: 340, phi: [0.5, 0.9], styles: ['random'], pos: v => v.set(0, 0, 0) },
+        };
+        const forced = ['earth', 'jupiter', 'saturn', 'mars', 'venus'];
+
+        let tNow = 0, shotA = null, shotB = null, trans = 1, shotCount = 0;
+        let userTheta = 0, userPhi = 0, distScale = 1, lastAct = 0, dragging = false, lastX = 0, lastY = 0;
+
+        function newShot(key, opts = {}) {
+            const def = SUBJ[key];
+            const shot = {
+                key, getPos: def.pos, t0: tNow, dur: 13 + Math.random() * 8,
+                drift: (Math.random() < 0.5 ? -1 : 1) * (0.03 + Math.random() * 0.045),
+                seed: Math.random() * 40, phiAmp: 0.07 + Math.random() * 0.05, special: null
+            };
+            let style = opts.style || def.styles[(Math.random() * def.styles.length) | 0];
+            const pos = new THREE.Vector3(); def.pos(pos);
+            const d0 = new THREE.Vector3();
+            if (style === 'front') {
+                d0.copy(pos).normalize().negate();
+            } else if (style === 'threequarter') {
+                const front = pos.clone().normalize().negate();
+                const side = new THREE.Vector3(-pos.z, 0, pos.x).normalize();
+                if (Math.random() < 0.5) side.negate();
+                d0.addVectors(front.multiplyScalar(0.75), side.multiplyScalar(0.65)).normalize();
+            } else if (style === 'side') {
+                d0.set(-pos.z, 0, pos.x).normalize();
+                if (Math.random() < 0.5) d0.negate();
+            } else {
+                const a = Math.random() * 6.2832;
+                d0.set(Math.cos(a), 0, Math.sin(a));
+            }
+            shot.theta0 = Math.atan2(d0.z, d0.x);
+            const phiMap = {
+                front: 0.12 + Math.random() * 0.35, threequarter: 0.12 + Math.random() * 0.35,
+                side: 0.10 + Math.random() * 0.35, edge: 0.03, random: 0.18 + Math.random() * 0.5
+            };
+            shot.phi0 = def.phi ? def.phi[0] + Math.random() * (def.phi[1] - def.phi[0]) : phiMap[style] || 0.3;
+            if (style === 'edge') { shot.phiAmp = 0.02; }
+            shot.dist0 = (opts.dist0 || def.dist * (0.92 + Math.random() * 0.25)) * (shot.distMul || 1);
+            shot.dist1 = opts.dist1 || shot.dist0 * (0.8 + Math.random() * 0.08);
+            if (style === 'edge') { shot.dist0 = 20; shot.dist1 = 17; }
+            if (opts.dur) shot.dur = opts.dur;
+            return shot;
+        }
+
+        const TA = new THREE.Vector3(), TB = new THREE.Vector3(), TV = new THREE.Vector3();
+        function shotCam(shot, outC, outL) {
+            const pos = shot.getPos(TA);
+            const tau = tNow - shot.t0;
+            const u = Math.min(1, tau / shot.dur);
+            const R = lerp(shot.dist0, shot.dist1, smoother(u)) * (1 + Math.sin(tau * 0.06 + shot.seed) * 0.045) * distScale;
+            const th = shot.theta0 + tau * shot.drift + userTheta;
+            const ph = clamp(shot.phi0 + Math.sin(tau * 0.09 + shot.seed) * shot.phiAmp + userPhi, -1.25, 1.25);
+            outC.set(pos.x + Math.cos(ph) * Math.cos(th) * R, pos.y + Math.sin(ph) * R, pos.z + Math.cos(ph) * Math.sin(th) * R);
+            outL.copy(pos);
+        }
+
+        const CA = new THREE.Vector3(), LA = new THREE.Vector3(), CB = new THREE.Vector3(), LB = new THREE.Vector3();
+        const camPos = new THREE.Vector3(), look = new THREE.Vector3();
+        function pickSubject() {
+            let tot = 0; for (const k in SUBJ) tot += SUBJ[k].w;
+            for (let tries = 0; tries < 8; tries++) {
+                let r = Math.random() * tot;
+                for (const k in SUBJ) { r -= SUBJ[k].w; if (r <= 0) { if (k !== shotB.key) return k; break; } }
+            }
+            return 'earth';
+        }
+        function nextSubject() { return forced.length ? forced.shift() : pickSubject(); }
+
+        function goTo(key, opts) {
+            shotA = shotB; shotB = newShot(key, opts); trans = 0;
+            shotCount++;
+        }
+
+        /* ============================================================ input */
+        function act() { lastAct = performance.now(); }
+        addEventListener('pointerdown', e => { dragging = true; lastX = e.clientX; lastY = e.clientY; act(); });
+        addEventListener('pointermove', e => {
+            act();
+            if (!dragging) return;
+            userTheta -= (e.clientX - lastX) * 0.0042;
+            userPhi = clamp(userPhi + (e.clientY - lastY) * 0.0032, -0.85, 0.85);
+            lastX = e.clientX; lastY = e.clientY;
+        });
+        addEventListener('pointerup', () => dragging = false);
+        addEventListener('wheel', e => { act(); distScale = clamp(distScale * (1 + e.deltaY * 0.0011), 0.45, 3.4); }, { passive: true });
+        addEventListener('resize', () => {
+            camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+            composer.setSize(innerWidth, innerHeight);
+            renderer.getDrawingBufferSize(grade.uniforms.uRes.value);
+        });
+
+        /* ============================================================ loop */
+        const clock = new THREE.Clock();
+        let moonAngle = 0;
+        function loop() {
+            requestAnimationFrame(loop);
+            const dt = Math.min(0.05, clock.getDelta());
+            tNow += dt;
+
+            for (const p of planets) {
+                p.angle += spd(p.cfg.dist) * dt;
+                p.anchor.position.set(Math.cos(p.angle) * p.cfg.dist, 0, Math.sin(p.angle) * p.cfg.dist);
+                p.mesh.rotation.y += p.cfg.spin * dt;
+                if (p.clouds) p.clouds.rotation.y += p.cfg.spin * 1.28 * dt;
+            }
+            moonAngle += 0.075 * dt;
+            moonAnchor.position.set(Math.cos(moonAngle) * 6.2, 0, Math.sin(moonAngle) * 6.2);
+            moonMesh.rotation.y = -moonAngle;
+            beltGroup.rotation.y += 0.006 * dt;
+            sunMesh.rotation.y += 0.004 * dt;
+            coronaSprites.forEach((m, i) => m.rotation += dt * 0.01 * (i ? -1 : 1));
+
+            sunMat.uniforms.uTime.value = tNow;
+            starMat.uniforms.uTime.value = tNow;
+            grade.uniforms.uTime.value = tNow;
+            for (const s of shellsArr) {
+                s.mesh.getWorldPosition(TV);
+                s.mat.uniforms.uCenter.value.copy(TV);
+                s.mat.uniforms.uSunDir.value.copy(TV).negate().normalize();
+            }
+            anchors.earth.getWorldPosition(TV);
+            earthMat.uniforms.uSunDir.value.copy(TV).negate().normalize();
+
+            if (performance.now() - lastAct > 6000) {
+                const k = 1 - Math.exp(-dt * 0.7);
+                userTheta += (0 - userTheta) * k; userPhi += (0 - userPhi) * k;
+                distScale += (1 - distScale) * k * 0.6;
+            }
+
+            trans = Math.min(1, trans + dt / 4.0);
+            const e = smoother(trans);
+            shotCam(shotB, CB, LB);
+            if (trans < 1 && shotA) {
+                shotCam(shotA, CA, LA);
+                camPos.lerpVectors(CA, CB, e); look.lerpVectors(LA, LB, e);
+            } else {
+                camPos.copy(CB); look.copy(LB);
+                if (tNow - shotB.t0 > shotB.dur) goTo(nextSubject());
+            }
+
+            const amp = camPos.distanceTo(look) * 0.0055;
+            camera.position.set(
+                camPos.x + (Math.sin(tNow * 0.33 + 2.0) + Math.sin(tNow * 0.71) * 0.5) * amp,
+                camPos.y + (Math.sin(tNow * 0.41 + 4.0) + Math.sin(tNow * 0.83 + 1.0) * 0.5) * amp * 0.7,
+                camPos.z + (Math.sin(tNow * 0.29 + 1.0) + Math.sin(tNow * 0.67 + 3.0) * 0.5) * amp * 0.6);
+            camera.lookAt(look);
+            camera.rotateZ(Math.sin(tNow * 0.047) * 0.011 + Math.sin(tNow * 0.019 + 2) * 0.007);
+
+            composer.render();
+        }
+
+        /* ============================================================ init */
+        const nextFrame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+        (async function init() {
+            try {
+                await nextFrame();
+                buildStars();
+                await nextFrame();
+                buildSun();
+
+                for (const cfg of CFG) {
+                    await nextFrame();
+                    let map, extra = {};
+                    if (cfg.key === 'mercury') map = texMercury();
+                    else if (cfg.key === 'venus') map = texVenus();
+                    else if (cfg.key === 'earth') {
+                        const e = texEarthPair();
+                        await nextFrame();
+                        extra = { day: e.day, night: e.night, clouds: e.clouds, moon: texMoon() };
+                        map = e.day;
+                    }
+                    else if (cfg.key === 'mars') map = texMars();
+                    else if (cfg.key === 'jupiter') map = texJupiter();
+                    else if (cfg.key === 'saturn') {
+                        const satN = makeNoise3(mulberry32(72));
+                        map = texSaturn();
+                        extra = { ring: { inner: 8.4, outer: 16.1, canvas: ringProfileCanvas(satN) } };
+                    }
+                    else if (cfg.key === 'uranus') {
+                        map = texUranus();
+                        extra = { ring: { inner: 6.6, outer: 8.6, canvas: uranusRingCanvas() } };
+                    }
+                    else map = texNeptune();
+                    buildPlanet(cfg, map, extra);
+                }
+                await nextFrame();
+                buildBelt();
+                await nextFrame();
+
+                shotCount = 1;
+                shotB = newShot('system', { dist0: 820, dist1: 230, dur: 20 });
+                shotB.phi0 = 0.6; shotB.phiAmp = 0.05;
+
+                composer.render();
+                requestAnimationFrame(loop);
+                setTimeout(() => {
+                    const boot = document.getElementById('boot');
+                    if (boot) boot.classList.add('gone');
+                }, 400);
+            } catch (err) {
+                console.error(err);
+                const boot = document.getElementById('boot');
+                if (boot) boot.classList.add('gone');
+            }
+        })();
+    </script>
+</body>
+
+</html>
