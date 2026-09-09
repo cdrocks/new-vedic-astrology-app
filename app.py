@@ -6,12 +6,35 @@ from timezonefinder import TimezoneFinder
 import pytz
 from datetime import datetime, timedelta
 from openai import OpenAI
+try:
+    import anthropic
+except ImportError:
+    anthropic = None
 import re
 import requests
 import traceback
 import os
 import json
 import logging
+
+def _load_dotenv_if_present():
+    env_path = os.path.join(os.path.dirname(__file__), ".env")
+    if os.path.exists(env_path):
+        try:
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        k = k.strip()
+                        v = v.strip().strip('"').strip("'")
+                        if k and k not in os.environ:
+                            os.environ[k] = v
+        except Exception:
+            pass
+
+_load_dotenv_if_present()
+
 from urllib.parse import quote
 from debug_utils import diagnose, is_production, log_crash, log_prompt, user_friendly_code
 import uuid
@@ -63,6 +86,7 @@ from bhava_bala import (
     validate_bhava_bala
 )
 from prompts import WORKFLOWS, classify_workflow, get_workflow_template
+from doshas import calculate_doshas, format_doshas_for_prompt
 
 
 # --- FREE QUESTION LIMIT SYSTEM (DB-backed) ---
@@ -552,6 +576,7 @@ Classify the user's question across two dimensions:
 - foreign         (overseas travel, foreign settlement, visas, immigration, PR, citizenship, relocating abroad)
 - legal           (court cases, disputes, litigations, police/FIR matters, legal settlements)
 - luck            (fortune, bhagya, spiritual merit, activating 9th house luck)
+- predictor_2027  (predictions for 2027, the year ahead, annual forecast, next 12 months roadmap)
 - general         (general life overview, spiritual purpose, karma, soul journey, or mixed topics)
 
 Respond with a single JSON object and no other text:
@@ -572,7 +597,7 @@ def _strip_markdown_json_fences(text: str) -> str:
     return text
 
 
-def ai_classify_question(text: str, client: OpenAI) -> tuple[str, str, str]:
+def ai_classify_question(text: str, client: Any, provider: str = "anthropic") -> tuple[str, str, str]:
     """
     Second-pass AI safety classifier & semantic workflow router.
     Returns (category, confidence, workflow).
@@ -581,19 +606,32 @@ def ai_classify_question(text: str, client: OpenAI) -> tuple[str, str, str]:
     """
     VALID_WORKFLOWS = {
         "career", "generic_career", "wealth", "marriage", "relationships",
-        "health", "children", "foreign", "legal", "luck", "general"
+        "health", "children", "foreign", "legal", "luck", "predictor_2027", "general"
     }
     try:
-        response = client.chat.completions.create(
-            model="deepseek-chat",  # cheaper/faster than deepseek-v4-pro
-            messages=[
-                {"role": "system", "content": _AI_SAFETY_SYSTEM_PROMPT},
-                {"role": "user", "content": f"Question: {text}"},
-            ],
-            temperature=0.0,
-            max_tokens=80,
-        )
-        raw = response.choices[0].message.content or ""
+        if provider == "anthropic":
+            haiku_model = os.getenv("ANTHROPIC_HAIKU_MODEL", "claude-haiku-4-5-20251001")
+            response = client.messages.create(
+                model=haiku_model,
+                system=_AI_SAFETY_SYSTEM_PROMPT,
+                messages=[
+                    {"role": "user", "content": f"Question: {text}"},
+                ],
+                temperature=0.0,
+                max_tokens=100,
+            )
+            raw = response.content[0].text if response.content else ""
+        else:
+            response = client.chat.completions.create(
+                model="deepseek-chat",  # cheaper/faster than deepseek-v4-pro
+                messages=[
+                    {"role": "system", "content": _AI_SAFETY_SYSTEM_PROMPT},
+                    {"role": "user", "content": f"Question: {text}"},
+                ],
+                temperature=0.0,
+                max_tokens=80,
+            )
+            raw = response.choices[0].message.content or ""
         raw = _strip_markdown_json_fences(raw)
         parsed = json.loads(raw)
         category = str(parsed.get("category", "")).strip().lower()
@@ -990,27 +1028,41 @@ if submit_button:
         st.error(t["blocked_prompt_injection"])
         st.stop()
 
-    # --- 3. INITIALIZE DEEPSEEK CLIENT (needed for AI safety classifier) ---
+    # --- 3. INITIALIZE LLM CLIENT (Claude Anthropic preferred, DeepSeek fallback) ---
+    anthropic_key = None
     deepseek_key = None
     try:
         if hasattr(st, "secrets"):
+            anthropic_key = st.secrets.get("ANTHROPIC_API_KEY")
             deepseek_key = st.secrets.get("DEEPSEEK_API_KEY")
     except Exception:
         pass
 
+    if not anthropic_key:
+        anthropic_key = os.getenv("ANTHROPIC_API_KEY")
     if not deepseek_key:
         deepseek_key = os.getenv("DEEPSEEK_API_KEY")
 
-    if not deepseek_key:
-        st.error("🔑 API key not found. Please add DEEPSEEK_API_KEY to your Streamlit secrets or environment variables.")
-        st.stop()
+    provider = None
+    client = None
 
-    client = OpenAI(api_key=deepseek_key, base_url="https://api.deepseek.com")
+    if anthropic_key and anthropic is not None:
+        provider = "anthropic"
+        client = anthropic.Anthropic(api_key=anthropic_key)
+    elif deepseek_key:
+        provider = "deepseek"
+        client = OpenAI(api_key=deepseek_key, base_url="https://api.deepseek.com")
+    elif anthropic_key and anthropic is None:
+        st.error("📦 The `anthropic` package is not installed. Please run: pip install anthropic")
+        st.stop()
+    else:
+        st.error("🔑 API key not found. Please add ANTHROPIC_API_KEY (or DEEPSEEK_API_KEY) to your environment variables or Streamlit secrets.")
+        st.stop()
 
     # --- 4. AI SECOND-PASS SAFETY CLASSIFIER & INTENT ROUTER ---
     # Only run for questions that passed local regex and injection filters.
     # No credit is consumed if blocked here.
-    ai_category, ai_confidence, ai_workflow = ai_classify_question(user_question, client)
+    ai_category, ai_confidence, ai_workflow = ai_classify_question(user_question, client, provider=provider)
     if ai_category != "safe" and ai_confidence in ("high", "medium"):
         _safety_block_stats["ai"] += 1
         _log_safety_block("ai", ai_category)
@@ -1591,6 +1643,14 @@ if submit_button:
                 f"Natal House {ketu_house_moon} (from Moon)\n"
             )
 
+            # Check transit combustion
+            for p in ["Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]:
+                if p in transit_dict:
+                    is_comb = (get_combustion_status(p, transit_dict) == "Combust")
+                    transit_dict[p]["combustion"] = is_comb
+                    if is_comb:
+                        gochar_string += f"⚠️ NOTE: Transit {p} is currently COMBUST (Astangata) by the transiting Sun.\n"
+
             # --- MOON DETAILS, CHANDRA LAGNA & PSYCHOLOGICAL ENGINE ---
             moon_deg_natal = float(chart_data["Moon"]["degree_total"])
             sun_deg_natal = float(chart_data["Sun"]["degree_total"])
@@ -1669,6 +1729,10 @@ if submit_button:
                 workflow_type = regex_wf if regex_wf != "general" else (ai_workflow if 'ai_workflow' in locals() and ai_workflow in WORKFLOWS else "general")
             if not is_production():
                 st.caption(f"Debug — Workflow: {workflow_type}")
+            # Vedic Doshas (Kaal Sarp, Manglik, Pitra)
+            doshas_data = calculate_doshas(chart_data, birth_dt=utc_dt)
+            doshas_string = format_doshas_for_prompt(doshas_data)
+
             # Safe placeholder replacement (immune to unescaped curly braces in prompt templates)
             replacements = {
                 "{chart_string}": chart_string,
@@ -1684,6 +1748,7 @@ if submit_button:
                 "{gochar_string}": gochar_string,
                 "{yoga_string}": yoga_string,
                 "{karaka_string}": karaka_string,
+                "{doshas_string}": doshas_string,
                 "{current_date}": current_date,
             }
             system_prompt = get_workflow_template(workflow_type)
@@ -1711,7 +1776,10 @@ if submit_button:
 
             # --- DEBUG: VIEW EXACT PROMPT ---
             if not is_production():
-                with st.expander("🔍 Debug — View raw prompt sent to DeepSeek"):
+                model_name = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5") if provider == "anthropic" else "deepseek-chat"
+                provider_title = f"Claude ({model_name})" if provider == "anthropic" else "DeepSeek"
+                with st.expander(f"🔍 Debug — View raw prompt sent to {provider_title}"):
+                    st.text(f"Provider: {provider_title}\n")
                     st.text(f"Workflow: {workflow_type}\n")
                     st.text(f"Target date: {now_utc.strftime('%d %b %Y %H:%M %Z')}\n")
                     st.text(f"System prompt length: {len(system_prompt)} chars\n")
@@ -1719,16 +1787,39 @@ if submit_button:
                     st.text(system_prompt)
             log_prompt(system_prompt, workflow_type, user_question, chart_id)
 
-            response = client.chat.completions.create(
-                model="deepseek-v4-pro",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"The native asks: <question>{user_question}</question>"}
-                ],
-                temperature=0.4
-            )
+            if provider == "anthropic":
+                anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5")
+                user_content = f"The native asks: <question>{user_question}</question>"
+                if workflow_type == "predictor_2027":
+                    user_content += (
+                        "\n\nFORMAT INSTRUCTION: Deliver the structured 4-Quarter Milestone Blueprint (Q1, Q2, Q3, Q4) "
+                        "with '✦ Where to Push' and '▲ Where to Steer with Care' for each quarter, as specified in the 2027 Milestone Blueprint."
+                    )
+                ant_kwargs = {
+                    "model": anthropic_model,
+                    "system": system_prompt,
+                    "messages": [
+                        {"role": "user", "content": user_content}
+                    ],
+                    "max_tokens": 4000,
+                }
+                if "sonnet-5" not in anthropic_model and "opus-4" not in anthropic_model:
+                    ant_kwargs["temperature"] = 0.4
+                else:
+                    ant_kwargs["thinking"] = {"type": "disabled"}
+                response = client.messages.create(**ant_kwargs)
+                raw_content = "".join([b.text for b in response.content if getattr(b, "type", "") == "text" or (hasattr(b, "text") and not hasattr(b, "thinking"))]).strip() if response.content else None
+            else:
+                response = client.chat.completions.create(
+                    model="deepseek-chat",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": f"The native asks: <question>{user_question}</question>"}
+                    ],
+                    temperature=0.4
+                )
+                raw_content = response.choices[0].message.content if (response.choices and response.choices[0].message) else None
 
-            raw_content = response.choices[0].message.content if (response.choices and response.choices[0].message) else None
             if not raw_content or not str(raw_content).strip():
                 raise RuntimeError("AI_EMPTY_RESPONSE: The AI returned an empty response. Please try again.")
 
@@ -1808,10 +1899,11 @@ if submit_button:
 
             code = user_friendly_code(e)
 
+            active_provider = "Claude" if locals().get("provider") == "anthropic" else "DeepSeek"
             if "429" in err_msg or "rate" in err_msg.lower():
-                st.error("💳 The DeepSeek account is out of credits or rate-limited.")
-            elif "401" in err_msg:
-                st.error("🔑 DeepSeek API key is invalid or revoked.")
+                st.error(f"💳 The {active_provider} account is out of credits or rate-limited.")
+            elif "401" in err_msg or "authentication" in err_msg.lower():
+                st.error(f"🔑 {active_provider} API key is invalid or revoked.")
             else:
                 st.error(f"Something went wrong. {code}")
 

@@ -17,6 +17,8 @@ debug_logs/
 # Leads & runtime event data
 event_leads.csv
 event_leads.jsonl
+client_readings/
+indore_report.txt
 
 # Streamlit secrets
 .streamlit/

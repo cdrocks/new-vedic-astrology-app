@@ -105,19 +105,33 @@ def diagnose():
     key_msg = "Not checked"
     try:
         import streamlit as st
-        key = None
+        # 1. Anthropic Claude Key
+        ant_key = None
         try:
             if hasattr(st, "secrets"):
-                key = st.secrets.get("DEEPSEEK_API_KEY")
+                ant_key = st.secrets.get("ANTHROPIC_API_KEY")
         except Exception:
             pass
-        if not key:
-            key = os.getenv("DEEPSEEK_API_KEY")
-        key_ok = bool(key)
-        key_msg = "Found" if key_ok else "Missing: add DEEPSEEK_API_KEY to Streamlit secrets or environment variables"
+        if not ant_key:
+            ant_key = os.getenv("ANTHROPIC_API_KEY")
+        ant_ok = bool(ant_key)
+        ant_msg = "Found" if ant_ok else "Missing: add ANTHROPIC_API_KEY to secrets or environment variables"
+        results.append(("Anthropic API Key (Claude)", ant_ok, ant_msg))
+
+        # 2. DeepSeek Key (fallback)
+        deep_key = None
+        try:
+            if hasattr(st, "secrets"):
+                deep_key = st.secrets.get("DEEPSEEK_API_KEY")
+        except Exception:
+            pass
+        if not deep_key:
+            deep_key = os.getenv("DEEPSEEK_API_KEY")
+        deep_ok = bool(deep_key)
+        deep_msg = "Found" if deep_ok else "Missing (optional fallback)"
+        results.append(("DeepSeek API Key", deep_ok, deep_msg))
     except Exception as e:
-        key_msg = f"Could not check secrets: {e}"
-    results.append(("DeepSeek API Key", key_ok, key_msg))
+        results.append(("LLM API Keys", False, f"Could not check secrets: {e}"))
 
     # 4. Workflow text files integrity
     wf_dir = os.path.join(os.path.dirname(__file__), "workflows")
@@ -229,8 +243,11 @@ ERR_CODES = {
     "ValueError": "ERR-CODE-002: Invalid input value (often date/time).",
     "AttributeError": "ERR-CODE-003: Tried to use a module/component that did not load correctly.",
     "swe.Error": "ERR-CALC-001: Swiss Ephemeris failed (bad date or coordinates).",
-    "requests.exceptions.ConnectionError": "ERR-NET-001: Could not reach DeepSeek API. Check internet.",
+    "requests.exceptions.ConnectionError": "ERR-NET-001: Could not reach AI API. Check internet.",
     "requests.exceptions.Timeout": "ERR-NET-002: API request timed out.",
+    "APIConnectionError": "ERR-NET-003: Could not connect to Anthropic Claude API.",
+    "RateLimitError": "ERR-LIMIT-001: AI provider rate limit or credit exceeded.",
+    "AuthenticationError": "ERR-AUTH-001: AI API key is invalid or revoked.",
 }
 
 

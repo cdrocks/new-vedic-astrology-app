@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jyotisha AI Console | Consultations & Prompt Tuning Audit</title>
+
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Marked.js for rendering markdown readings -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    :root {
+      --bg-base: #07090e;
+      --bg-surface: rgba(14, 20, 32, 0.85);
+      --bg-card: rgba(20, 29, 48, 0.7);
+      --bg-card-hover: rgba(28, 41, 68, 0.85);
+      --border-subtle: rgba(212, 175, 55, 0.18);
+      --border-strong: rgba(212, 175, 55, 0.4);
+      --gold-primary: #e5b94c;
+      --gold-bright: #ffd875;
+      --gold-dim: #997b32;
+      --emerald: #10b981;
+      --emerald-bg: rgba(16, 185, 129, 0.12);
+      --amber: #f59e0b;
+      --amber-bg: rgba(245, 158, 11, 0.12);
+      --blue: #38bdf8;
+      --blue-bg: rgba(56, 189, 248, 0.12);
+      --purple: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-faint: #64748b;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --radius-sm: 6px;
+      --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--border-subtle);
+      --shadow-glow: 0 0 35px rgba(229, 185, 76, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      background-image: 
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(229, 185, 76, 0.12), transparent),
+        radial-gradient(ellipse 60% 40% at 90% 100%, rgba(56, 189, 248, 0.08), transparent),
+        linear-gradient(to bottom, #07090e 0%, #0a0e17 100%);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      padding-bottom: 60px;
+      line-height: 1.5;
+    }
+
+    /* Top Navigation Bar */
+    .admin-nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(7, 9, 14, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #e5b94c, #997b32);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #07090e;
+      font-weight: 800;
+      font-size: 18px;
+      box-shadow: 0 0 16px rgba(229, 185, 76, 0.35);
+    }
+
+    .brand-text h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #fff;
+    }
+
+    .brand-text p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, #e5b94c, #c99c2d);
+      color: #07090e;
+      box-shadow: 0 2px 10px rgba(229, 185, 76, 0.25);
+    }
+    .btn-gold:hover {
+      background: linear-gradient(135deg, #ffd875, #e5b94c);
+      transform: translateY(-1px);
+    }
+
+    .btn-glass {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+    .btn-glass:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--border-strong);
+    }
+
+    /* Main Container */
+    .admin-container {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 28px 24px;
+    }
+
+    /* Stats Ribbon */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-card);
+    }
+
+    .stat-info .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .stat-info .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .stat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-green {
+      background: var(--emerald-bg);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-amber {
+      background: var(--amber-bg);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 8px currentColor;
+      animation: pulseAnim 2s infinite;
+    }
+
+    @keyframes pulseAnim {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* Filter & Search Bar */
+    .controls-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .search-input-wrap {
+      flex: 1;
+      position: relative;
+    }
+
+    .search-input-wrap svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-faint);
+    }
+
+    .search-input {
+      width: 100%;
+      background: rgba(10, 14, 24, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px 10px 42px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 12px rgba(229, 185, 76, 0.2);
+    }
+
+    .filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pill-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .pill-btn.active {
+      background: linear-gradient(135deg, rgba(229, 185, 76, 0.2), rgba(229, 185, 76, 0.08));
+      color: var(--gold-bright);
+      border-color: var(--gold-primary);
+      font-weight: 600;
+    }
+
+    /* Readings Feed */
+    .readings-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .reading-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-card);
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+
+    .reading-card:hover {
+      border-color: var(--border-strong);
+      background: var(--bg-card-hover);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .client-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .client-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: var(--gold-bright);
+      font-size: 16px;
+      text-transform: uppercase;
+    }
+
+    .client-name-wrap h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .client-birth-info {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .client-birth-info span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .workflow-tag {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .wf-predictor_2027 {
+      background: rgba(229, 185, 76, 0.15);
+      color: #ffd875;
+      border: 1px solid rgba(229, 185, 76, 0.4);
+    }
+
+    .wf-career {
+      background: var(--blue-bg);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    .wf-wealth {
+      background: var(--emerald-bg);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .wf-relationships, .wf-marriage {
+      background: rgba(244, 114, 182, 0.15);
+      color: #f472b6;
+      border: 1px solid rgba(244, 114, 182, 0.4);
+    }
+
+    .wf-superpowers {
+      background: var(--purple-bg);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.4);
+    }
+
+    .wf-custom {
+      background: rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    /* Cosmic Chips */
+    .astro-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .astro-chip {
+      background: rgba(10, 14, 24, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .astro-chip strong {
+      color: #cbd5e1;
+      font-weight: 600;
+    }
+
+    /* Question Box */
+    .question-box {
+      background: rgba(229, 185, 76, 0.06);
+      border-left: 3px solid var(--gold-primary);
+      padding: 10px 14px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 13.5px;
+      color: #f1f5f9;
+      font-style: italic;
+      margin-bottom: 16px;
+    }
+
+    /* Reading Content Box */
+    .reading-content {
+      background: rgba(7, 9, 14, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #e2e8f0;
+      position: relative;
+    }
+
+    .reading-content h3 {
+      font-size: 15px;
+      color: var(--gold-bright);
+      margin-top: 14px;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .reading-content h4 {
+      font-size: 14px;
+      color: #fff;
+      margin-top: 10px;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .reading-content p {
+      margin-bottom: 10px;
+    }
+
+    .reading-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    .reading-content strong {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--bg-surface);
+      border: 1px dashed var(--border-subtle);
+      border-radius: var(--radius-lg);
+      color: var(--text-muted);
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      color: var(--text-faint);
+      margin-bottom: 12px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0f172a;
+      border: 1px solid var(--gold-primary);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all 0.25s ease;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Loading Spinner */
+    .loader {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(229, 185, 76, 0.2);
+      border-top-color: var(--gold-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <nav class="admin-nav">
+    <div class="nav-brand">
+      <div class="brand-icon">✦</div>
+      <div class="brand-text">
+        <h1>Jyotisha AI Console</h1>
+        <p>Consultations, Readings Audit & Prompt Tuning Log</p>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <a href="/app" class="btn btn-glass btn-sm" target="_blank">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+        Open Kiosk App
+      </a>
+      <button class="btn btn-glass btn-sm" id="btn-export-csv" onclick="handleExportCSV(event)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        Export CSV
+      </button>
+      <button class="btn btn-gold btn-sm" onclick="loadReadings()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+        Refresh
+      </button>
+    </div>
+  </nav>
+
+  <!-- Local file mode helper notice -->
+  <div id="file-protocol-notice" style="display: none; background: rgba(229, 185, 76, 0.15); border-bottom: 1px solid rgba(229, 185, 76, 0.3); padding: 10px 24px; text-align: center; font-size: 13px; color: #ffd875;">
+    ✦ Running as local file. For live database sync & instant downloads, open: 
+    <a href="http://localhost:8000/admin" style="color: #fff; font-weight: 700; text-decoration: underline; margin-left: 6px;">http://localhost:8000/admin</a>
+  </div>
+
+  <!-- Container -->
+  <main class="admin-container">
+
+    <!-- Stats Ribbon -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="stat-label">Total Readings</div>
+          <div class="stat-value" id="stat-total">--</div>
+        </div>
+        <div class="stat-badge badge-green">
+          <div class="pulse-dot"></div>
+          Live Logged
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="stat-label">Database Status</div>
+          <div class="stat-value" id="stat-db-name" style="font-size: 16px;">Checking...</div>
+        </div>
+        <div class="stat-badge" id="stat-db-badge">
+          <div class="pulse-dot"></div>
+          <span id="stat-db-text">Verifying</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="stat-label">The Year Ahead (2027)</div>
+          <div class="stat-value" id="stat-year-ahead">--</div>
+        </div>
+        <div class="stat-badge" style="background: rgba(229, 185, 76, 0.15); color: #ffd875; border: 1px solid rgba(229, 185, 76, 0.3);">
+          4-Quarter Roadmap
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="stat-label">Data Storage Mode</div>
+          <div class="stat-value" id="stat-storage-mode" style="font-size: 16px;">Postgres + Local</div>
+        </div>
+        <div class="stat-badge badge-green">
+          Zero-Data-Loss
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls Panel -->
+    <div class="controls-panel">
+      <div class="search-row">
+        <div class="search-input-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="search-input" class="search-input" placeholder="Search by guest name, question keywords, or reading text..." oninput="handleSearch()" />
+        </div>
+      </div>
+
+      <div class="filter-pills" id="workflow-filters">
+        <button class="pill-btn active" data-wf="all" onclick="setWorkflowFilter('all')">All Consultations</button>
+        <button class="pill-btn" data-wf="predictor_2027" onclick="setWorkflowFilter('predictor_2027')">The Year Ahead (2027)</button>
+        <button class="pill-btn" data-wf="career" onclick="setWorkflowFilter('career')">Career</button>
+        <button class="pill-btn" data-wf="wealth" onclick="setWorkflowFilter('wealth')">Wealth</button>
+        <button class="pill-btn" data-wf="relationships" onclick="setWorkflowFilter('relationships')">Relationships</button>
+        <button class="pill-btn" data-wf="marriage" onclick="setWorkflowFilter('marriage')">Marriage</button>
+        <button class="pill-btn" data-wf="superpowers" onclick="setWorkflowFilter('superpowers')">Superpowers</button>
+        <button class="pill-btn" data-wf="custom" onclick="setWorkflowFilter('custom')">Custom Questions</button>
+      </div>
+    </div>
+
+    <!-- Readings Feed -->
+    <section class="readings-feed" id="readings-container">
+      <div class="empty-state">
+        <div class="loader"></div>
+        <p style="margin-top: 12px;">Fetching consultation logs...</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="toast">Text copied to clipboard</div>
+
+  <script>
+    const API_BASE = window.location.protocol.startsWith('http') ? '' : 'http://localhost:8000';
+    let allReadings = [];
+    let currentWorkflow = 'all';
+    let searchQuery = '';
+
+    async function handleExportCSV(event) {
+      if (event) event.preventDefault();
+      showToast("Preparing CSV download...");
+
+      // 1. If served over HTTP/HTTPS, trigger direct browser download from server endpoint
+      if (window.location.protocol.startsWith('http')) {
+        window.location.href = `${API_BASE}/api/admin/export-csv`;
+        return;
+      }
+
+      // 2. If opened as a local file (file://), try fetching from running localhost server
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/export-csv`);
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `vedic_readings_${new Date().toISOString().slice(0, 10)}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+          showToast("CSV downloaded successfully!");
+          return;
+        }
+      } catch (err) {
+        console.warn("Could not fetch CSV from local server, generating client-side", err);
+      }
+
+      // 3. Fallback: generate CSV client-side from loaded readings array
+      if (allReadings && allReadings.length > 0) {
+        generateClientSideCSV(allReadings);
+      } else {
+        showToast("Opening http://localhost:8000/admin for direct download...");
+        window.open('http://localhost:8000/admin', '_blank');
+      }
+    }
+
+    function generateClientSideCSV(readings) {
+      const headers = ["timestamp", "name", "email", "phone", "workflow", "dob", "time", "city", "ascendant", "moon_sign", "nakshatra", "current_dasha", "question", "reading"];
+      const escapeVal = (v) => `"${String(v || '').replace(/"/g, '""')}"`;
+      
+      const rows = readings.map(r => [
+        escapeVal(r.timestamp),
+        escapeVal(r.name || r.customer_name),
+        escapeVal(r.email),
+        escapeVal(r.phone),
+        escapeVal(r.workflow || r.topic),
+        escapeVal(r.dob),
+        escapeVal(r.time),
+        escapeVal(r.city),
+        escapeVal(r.ascendant),
+        escapeVal(r.moon_sign),
+        escapeVal(r.nakshatra),
+        escapeVal(r.current_dasha),
+        escapeVal(r.question),
+        escapeVal(r.reading || r.answer)
+      ]);
+
+      const csvString = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `vedic_readings_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      showToast("CSV downloaded successfully!");
+    }
+
+    async function checkDbStatus() {
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/db-status`);
+        const data = await res.json();
+        const dbNameEl = document.getElementById('stat-db-name');
+        const dbBadgeEl = document.getElementById('stat-db-badge');
+        const dbTextEl = document.getElementById('stat-db-text');
+
+        if (data.database_connected) {
+          dbNameEl.textContent = "Railway Postgres";
+          dbBadgeEl.className = "stat-badge badge-green";
+          dbTextEl.textContent = "Connected";
+        } else if (data.database_configured) {
+          dbNameEl.textContent = "Postgres Connecting";
+          dbBadgeEl.className = "stat-badge badge-amber";
+          dbTextEl.textContent = "Checking URL";
+        } else {
+          dbNameEl.textContent = "Local Backup Active";
+          dbBadgeEl.className = "stat-badge badge-amber";
+          dbTextEl.textContent = "event_leads.jsonl";
+        }
+      } catch (e) {
+        console.warn("Could not check db status", e);
+      }
+    }
+
+    async function loadReadings() {
+      const container = document.getElementById('readings-container');
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="loader"></div>
+          <p style="margin-top: 12px;">Loading recent readings...</p>
+        </div>
+      `;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/readings?limit=200`);
+        const data = await res.json();
+
+        if (data.status === 'success') {
+          allReadings = data.readings || [];
+          renderReadings();
+          updateStats(data);
+        } else {
+          container.innerHTML = `<div class="empty-state"><p>Error loading readings: ${data.message || 'Unknown error'}</p></div>`;
+        }
+      } catch (err) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <p style="color: #ffd875; font-weight: 600; margin-bottom: 8px;">Connecting to Vedic Astrology Server...</p>
+            <p>Please open the console at <a href="http://localhost:8000/admin" target="_blank" style="color: #38bdf8; text-decoration: underline; font-weight: 600;">http://localhost:8000/admin</a> for live database sync & downloads.</p>
+          </div>
+        `;
+      }
+      checkDbStatus();
+    }
+
+    function updateStats(data) {
+      document.getElementById('stat-total').textContent = allReadings.length;
+      const yearAheadCount = allReadings.filter(r => (r.workflow || '').toLowerCase().includes('2027') || (r.topic || '').toLowerCase().includes('2027')).length;
+      document.getElementById('stat-year-ahead').textContent = yearAheadCount;
+    }
+
+    function setWorkflowFilter(wf) {
+      currentWorkflow = wf;
+      document.querySelectorAll('#workflow-filters .pill-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-wf') === wf);
+      });
+      renderReadings();
+    }
+
+    function handleSearch() {
+      searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+      renderReadings();
+    }
+
+    function formatWorkflowTag(wf) {
+      const w = (wf || 'general').toLowerCase();
+      let label = wf || 'General';
+      let cls = 'wf-custom';
+      if (w.includes('2027')) {
+        label = 'Year Ahead (2027)';
+        cls = 'wf-predictor_2027';
+      } else if (w.includes('career')) {
+        label = 'Career';
+        cls = 'wf-career';
+      } else if (w.includes('wealth')) {
+        label = 'Wealth';
+        cls = 'wf-wealth';
+      } else if (w.includes('marri')) {
+        label = 'Marriage';
+        cls = 'wf-marriage';
+      } else if (w.includes('relat')) {
+        label = 'Relationships';
+        cls = 'wf-relationships';
+      } else if (w.includes('power')) {
+        label = 'Superpowers';
+        cls = 'wf-superpowers';
+      }
+      return `<span class="workflow-tag ${cls}">${label}</span>`;
+    }
+
+    function renderReadings() {
+      const container = document.getElementById('readings-container');
+      
+      const filtered = allReadings.filter(item => {
+        const itemWf = (item.workflow || item.topic || '').toLowerCase();
+        
+        // Workflow filter
+        if (currentWorkflow !== 'all') {
+          if (currentWorkflow === 'predictor_2027' && !itemWf.includes('2027')) return false;
+          if (currentWorkflow !== 'predictor_2027' && !itemWf.includes(currentWorkflow)) return false;
+        }
+
+        // Search filter
+        if (searchQuery) {
+          const matchName = (item.name || '').toLowerCase().includes(searchQuery);
+          const matchQuestion = (item.question || '').toLowerCase().includes(searchQuery);
+          const matchReading = (item.reading || item.answer || '').toLowerCase().includes(searchQuery);
+          const matchCity = (item.city || '').toLowerCase().includes(searchQuery);
+          if (!matchName && !matchQuestion && !matchReading && !matchCity) return false;
+        }
+
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+            <p>No consultations match your filter or search criteria.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map((item, idx) => {
+        const name = item.name || item.customer_name || 'Seeker';
+        const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2) || 'S';
+        const timeStr = item.timestamp ? new Date(item.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'Recent';
+        const readingText = item.reading || item.answer || 'Reading text pending or generated offline.';
+        const parsedReading = typeof marked !== 'undefined' ? marked.parse(readingText) : readingText;
+        
+        // Construct birth info
+        const birthParts = [];
+        if (item.dob) birthParts.push(`DOB: ${item.dob}`);
+        if (item.time) birthParts.push(`Time: ${item.time}`);
+        if (item.city) birthParts.push(`City: ${item.city}`);
+        if (item.email) birthParts.push(`Email: ${item.email}`);
+        if (item.phone) birthParts.push(`Phone: ${item.phone}`);
+
+        return `
+          <article class="reading-card" id="card-${idx}">
+            <div class="card-top">
+              <div class="client-meta">
+                <div class="client-avatar">${initials}</div>
+                <div class="client-name-wrap">
+                  <h3>${name} ${item.source === 'railway_postgres' ? '<span style="font-size:10px; color:#10b981;">● Postgres</span>' : '<span style="font-size:10px; color:#f59e0b;">● Local</span>'}</h3>
+                  <div class="client-birth-info">
+                    <span>${timeStr}</span>
+                    ${birthParts.map(p => `<span>• ${p}</span>`).join('')}
+                  </div>
+                </div>
+              </div>
+              <div>
+                ${formatWorkflowTag(item.workflow || item.topic)}
+              </div>
+            </div>
+
+            <div class="astro-chips">
+              ${item.ascendant ? `<div class="astro-chip">Ascendant: <strong>${item.ascendant}</strong></div>` : ''}
+              ${item.moon_sign ? `<div class="astro-chip">Moon Sign: <strong>${item.moon_sign}</strong></div>` : ''}
+              ${item.nakshatra ? `<div class="astro-chip">Nakshatra: <strong>${item.nakshatra}</strong></div>` : ''}
+              ${item.current_dasha ? `<div class="astro-chip">Current Dasha: <strong>${item.current_dasha}</strong></div>` : ''}
+            </div>
+
+            <div class="question-box">
+              "${item.question || 'Vedic Life Assessment'}"
+            </div>
+
+            <div class="reading-content" id="reading-body-${idx}">
+              ${parsedReading}
+            </div>
+
+            <div class="card-actions">
+              <button class="btn btn-glass btn-sm" onclick="copyReading(${idx})">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                Copy Reading
+              </button>
+              <button class="btn btn-glass btn-sm" onclick="copyTestCase(${idx})">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Copy for Prompt Tuning
+              </button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    function copyReading(idx) {
+      const card = allReadings[idx];
+      if (!card) return;
+      const text = card.reading || card.answer || '';
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("Reading copied to clipboard!");
+      });
+    }
+
+    function copyTestCase(idx) {
+      const card = allReadings[idx];
+      if (!card) return;
+      const testCase = {
+        name: card.name || card.customer_name,
+        dob: card.dob,
+        time: card.time,
+        city: card.city,
+        workflow: card.workflow || card.topic,
+        question: card.question,
+        reading_output: card.reading || card.answer
+      };
+      navigator.clipboard.writeText(JSON.stringify(testCase, null, 2)).then(() => {
+        showToast("Test case JSON copied for prompt evaluation!");
+      });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.location.protocol === 'file:') {
+        const notice = document.getElementById('file-protocol-notice');
+        if (notice) notice.style.display = 'block';
+      }
+      loadReadings();
+    });
+  </script>
+</body>
+</html>

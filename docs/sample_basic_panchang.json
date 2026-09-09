@@ -1,0 +1,105 @@
+{
+  "meta": {
+    "engine": "astro-engine/0.1.0",
+    "ephemeris": "DE421",
+    "conventions": {
+      "ayanamsha": "lahiri",
+      "ayanamsha_deg": 24.229915,
+      "sunrise": "astronomical",
+      "hora": "indian_60min",
+      "choghadiya_night_lord": "classical_v1"
+    },
+    "jd_tt": 2461292.771634,
+    "jd_ut1": 2461292.770834,
+    "local": "2026-09-09 12:00:00 IST",
+    "utc": "2026-09-09 06:30:00 UTC",
+    "engine_version": "0.1.0",
+    "julian_day": 2461292.771634,
+    "ayanamsha_type": "lahiri",
+    "ayanamsha_deg": 24.229915,
+    "ayanamsha_dms": "24\u00b013'48\"",
+    "sunrise_convention": "astronomical_refracted_-50arcmin",
+    "query_utc": "2026-09-09 06:30:00 UTC",
+    "query_local": "2026-09-09 12:00:00 IST",
+    "timezone": "Asia/Kolkata"
+  },
+  "solar": {
+    "sunrise": "2026-09-09 06:03:04",
+    "sunset": "2026-09-09 18:33:37",
+    "next_sunrise": "2026-09-10 06:03:33",
+    "solar_noon": "2026-09-09 12:18:34",
+    "dina_mana_hours": 12.509,
+    "ratri_mana_hours": 11.499,
+    "is_daytime": true,
+    "polar_phenomenon": null,
+    "sunrise_astronomical": "2026-09-09 06:03:04",
+    "sunrise_hindu": "2026-09-09 06:06:53"
+  },
+  "tithi": {
+    "number": 28,
+    "name": "Krishna Trayodashi",
+    "paksha": "Krishna",
+    "paksha_tithi_number": 13,
+    "elapsed_percentage": 97.62,
+    "end_time": "2026-09-09 12:31:18",
+    "name_sanskrit": "\u0915\u0943\u0937\u094d\u0923 \u0924\u094d\u0930\u092f\u094b\u0926\u0936\u0940",
+    "category": "Jaya (Victory)",
+    "deity": "Kamadeva (Love/Desire)",
+    "suitable_activities": [
+      "Wearing new garments",
+      "Jewelry purchase",
+      "Fine arts & romance",
+      "Sensory celebrations",
+      "Friendship"
+    ],
+    "unfavorable_activities": [
+      "Long journeys",
+      "Funeral rights"
+    ]
+  },
+  "vara": {
+    "name": "Budhavara",
+    "lord": "Mercury"
+  },
+  "nakshatra": {
+    "number": 9,
+    "name": "Ashlesha",
+    "lord": "Mercury",
+    "pada": 4,
+    "elapsed_percentage": 85.71,
+    "end_time": "2026-09-09 15:14:20",
+    "name_sanskrit": "\u0906\u0936\u094d\u0932\u0947\u0937\u093e",
+    "energy": "Sharp & Dreadful (Tikshna/Daruna)",
+    "deity": "Sarpas (Serpents of Wisdom)",
+    "symbol": "Coiled Serpent",
+    "naming_syllable": "Do",
+    "suitable_activities": [
+      "Deep research & data mining",
+      "Handling poison or venom",
+      "Competitive defense",
+      "Surgery",
+      "Dealing with rivals"
+    ],
+    "unfavorable_activities": [
+      "Weddings",
+      "House-warming (Griha Pravesh)",
+      "Lending large loans"
+    ]
+  },
+  "yoga": {
+    "number": 20,
+    "name": "Shiva",
+    "name_sanskrit": "\u0936\u093f\u0935",
+    "quality": "Benefic (Shubha)",
+    "recommendation": "Auspicious and serene. Ideal for meditation, spiritual learning, and harmonious deals."
+  },
+  "karana": {
+    "number": 56,
+    "name": "Vanija",
+    "type": "Movable (Chara)",
+    "name_sanskrit": "\u0935\u0923\u093f\u091c",
+    "deity": "Lakshmi (Goddess of Wealth)",
+    "is_bhadra": false,
+    "recommendation": "Highly auspicious for sales, retail, trade, and financial contracts."
+  }
+}

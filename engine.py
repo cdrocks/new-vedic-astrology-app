@@ -440,13 +440,15 @@ def calculate_vimshottari_dasha(moon_degree, birth_dt, target_dt, days_per_year=
 
     # --- Locate Current Mahadasha ---
     md_idx = lord_idx
+    elapsed_before_birth = first_years - balance_years
 
     if years_passed < balance_years:
         current_md = first_lord
-        md_start_years = 0.0
-        md_end_years = balance_years
-        years_into_md = years_passed
-        md_duration = balance_years          # FIXED: first period is balance only
+        md_duration = first_years
+        nominal_md_start_dt = birth_dt - timedelta(days=elapsed_before_birth * days_per_year)
+        md_end_dt = birth_dt + timedelta(days=balance_years * days_per_year)
+        md_start_dt = nominal_md_start_dt
+        years_into_md = elapsed_before_birth + years_passed
     else:
         accumulated = balance_years
         md_idx = (lord_idx + 1) % 9
@@ -454,47 +456,49 @@ def calculate_vimshottari_dasha(moon_degree, birth_dt, target_dt, days_per_year=
             md_name, md_duration_full = DASHA_SEQ[md_idx]
             if accumulated + md_duration_full > years_passed:
                 current_md = md_name
-                md_start_years = accumulated
-                md_end_years = accumulated + md_duration_full
-                years_into_md = years_passed - accumulated
                 md_duration = md_duration_full
+                md_start_dt = birth_dt + timedelta(days=accumulated * days_per_year)
+                md_end_dt = birth_dt + timedelta(days=(accumulated + md_duration_full) * days_per_year)
+                nominal_md_start_dt = md_start_dt
+                years_into_md = years_passed - accumulated
                 break
             accumulated += md_duration_full
             md_idx = (md_idx + 1) % 9
         else:
             current_md = DASHA_SEQ[md_idx][0]
-            md_start_years = accumulated
-            md_end_years = accumulated + DASHA_SEQ[md_idx][1]
-            years_into_md = 0.0
             md_duration = DASHA_SEQ[md_idx][1]
+            md_start_dt = birth_dt + timedelta(days=accumulated * days_per_year)
+            md_end_dt = birth_dt + timedelta(days=(accumulated + md_duration) * days_per_year)
+            nominal_md_start_dt = md_start_dt
+            years_into_md = 0.0
 
     # --- Locate Current Antardasha ---
-    ad_idx = md_idx
     ad_accumulated = 0.0
     current_ad = None
     ad_start_in_md = 0.0
     ad_end_in_md = 0.0
+    active_ad_idx = md_idx
 
-    for _ in range(20):
-        ad_name, ad_years_total = DASHA_SEQ[ad_idx]
+    for i in range(9):
+        curr_ad_idx = (md_idx + i) % 9
+        ad_name, ad_years_total = DASHA_SEQ[curr_ad_idx]
         ad_duration = (md_duration * ad_years_total) / 120.0
-        if ad_accumulated + ad_duration > years_into_md:
+        ad_end = ad_accumulated + ad_duration
+        if ad_end > years_into_md:
             current_ad = ad_name
             ad_start_in_md = ad_accumulated
-            ad_end_in_md = ad_accumulated + ad_duration
+            ad_end_in_md = ad_end
+            active_ad_idx = curr_ad_idx
             break
         ad_accumulated += ad_duration
-        ad_idx = (ad_idx + 1) % 9
     else:
-        current_ad = DASHA_SEQ[ad_idx][0]
+        current_ad = DASHA_SEQ[active_ad_idx][0]
         ad_start_in_md = ad_accumulated
-        ad_end_in_md = ad_accumulated + (md_duration * DASHA_SEQ[ad_idx][1]) / 120.0
+        ad_end_in_md = ad_accumulated + (md_duration * DASHA_SEQ[active_ad_idx][1]) / 120.0
 
     # --- Derive wall-clock dates ---
-    md_start_dt = birth_dt + timedelta(days=md_start_years * days_per_year)
-    md_end_dt = birth_dt + timedelta(days=md_end_years * days_per_year)
-    ad_start_dt = md_start_dt + timedelta(days=ad_start_in_md * days_per_year)
-    ad_end_dt = md_start_dt + timedelta(days=ad_end_in_md * days_per_year)
+    ad_start_dt = nominal_md_start_dt + timedelta(days=ad_start_in_md * days_per_year)
+    ad_end_dt = nominal_md_start_dt + timedelta(days=ad_end_in_md * days_per_year)
 
     # --- Next periods ---
     next_md_idx = (md_idx + 1) % 9
@@ -503,12 +507,12 @@ def calculate_vimshottari_dasha(moon_degree, birth_dt, target_dt, days_per_year=
     if ad_end_in_md >= md_duration - 1e-9:
         next_ad = next_md
     else:
-        next_ad_idx = (ad_idx + 1) % 9
+        next_ad_idx = (active_ad_idx + 1) % 9
         next_ad = DASHA_SEQ[next_ad_idx][0]
 
     # --- Locate Current Pratyantardasha (Sub-Sub Period) ---
     total_ad_days = max(1.0, (ad_end_dt - ad_start_dt).total_seconds() / 86400.0)
-    reordered_pd_seq = [DASHA_SEQ[(ad_idx + i) % 9] for i in range(9)]
+    reordered_pd_seq = [DASHA_SEQ[(active_ad_idx + i) % 9] for i in range(9)]
 
     current_pd = None
     pd_start_dt = ad_start_dt

@@ -158,10 +158,13 @@ def classify_workflow(text: str) -> str:
     ]):
         return "legal"
 
-    # 11. Dedicated 2027 Milestone Window & Annual Predictor
+    # 11. Dedicated 2027 & The Year Ahead (Quarterly Milestone Predictor)
     if has_match([
         "2027", "year 2027", "in 2027", "predictor 2027", "milestones 2027",
-        "2027 prediction", "2027 forecast", "what will happen in 2027"
+        "2027 prediction", "2027 forecast", "what will happen in 2027",
+        "year ahead", "the year ahead", "next 12 months", "12 months",
+        "next year", "upcoming year", "annual forecast", "annual prediction",
+        "quarterly", "milestones", "journey over the next 12 months"
     ]):
         return "predictor_2027"
 

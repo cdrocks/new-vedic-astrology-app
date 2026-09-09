@@ -405,6 +405,24 @@ function renderReadingResult(data) {
   document.getElementById("res-ak").textContent = data.atmakaraka || "Sun";
   document.getElementById("res-dasha").textContent = data.current_dasha || "Active Period";
 
+  // Render Active Yogas
+  const yogasContainer = document.getElementById("res-yogas-container");
+  const yogasList = document.getElementById("res-yogas-list");
+  if (yogasContainer && yogasList) {
+    if (data.active_yogas && data.active_yogas.length > 0) {
+      yogasList.innerHTML = data.active_yogas.map(y => `
+        <div style="background: rgba(14, 20, 32, 0.85); border: 1px solid rgba(229, 185, 76, 0.4); padding: 5px 12px; border-radius: 6px; font-size: 0.85rem; color: #fff; display: inline-flex; align-items: center; gap: 6px;">
+          <span style="color: #10b981; font-size: 0.65rem;">●</span>
+          <span style="color: #ffd875; font-weight: 700;">${y.name}</span>
+          <span style="font-size: 0.72rem; color: #94a3b8;">[${y.category}]</span>
+        </div>
+      `).join('');
+      yogasContainer.style.display = "block";
+    } else {
+      yogasContainer.style.display = "none";
+    }
+  }
+
   // Parse Markdown to HTML
   const markdownContainer = document.getElementById("res-reading-text");
   if (window.marked) {

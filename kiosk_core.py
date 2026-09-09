@@ -11,6 +11,28 @@ import swisseph as swe
 from geopy.geocoders import ArcGIS, Nominatim
 from timezonefinder import TimezoneFinder
 from openai import OpenAI
+try:
+    import anthropic
+except ImportError:
+    anthropic = None
+
+def _load_dotenv_if_present():
+    env_path = os.path.join(os.path.dirname(__file__), ".env")
+    if os.path.exists(env_path):
+        try:
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        k = k.strip()
+                        v = v.strip().strip('"').strip("'")
+                        if k and k not in os.environ:
+                            os.environ[k] = v
+        except Exception:
+            pass
+
+_load_dotenv_if_present()
 
 from engine import (
     get_nakshatra,
@@ -43,6 +65,7 @@ from bhava_bala import (
     validate_bhava_bala
 )
 from prompts import WORKFLOWS, classify_workflow, get_workflow_template
+from doshas import calculate_doshas, format_doshas_for_prompt
 
 # Initialize Geocoder and TimezoneFinder
 tf = TimezoneFinder()
@@ -120,21 +143,46 @@ def get_location_data(city_name: str) -> Optional[Tuple[float, float, str]]:
 
     return None
 
-def _get_api_key() -> str:
-    """Retrieve API key from env or .streamlit/secrets.toml"""
-    key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY")
-    if not key:
+def _get_api_credentials() -> Tuple[str, str]:
+    """Retrieve (provider, api_key) from env or secrets."""
+    # 1. Anthropic Claude (preferred)
+    ant_key = os.getenv("ANTHROPIC_API_KEY")
+    if not ant_key:
+        secrets_path = os.path.join(os.path.dirname(__file__), ".streamlit", "secrets.toml")
+        if os.path.exists(secrets_path):
+            try:
+                with open(secrets_path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if "ANTHROPIC_API_KEY" in line and "=" in line:
+                            ant_key = line.split("=", 1)[1].strip().strip('"').strip("'")
+                            break
+            except Exception:
+                pass
+    if ant_key and anthropic is not None:
+        return "anthropic", ant_key
+
+    # 2. DeepSeek (fallback)
+    deep_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY")
+    if not deep_key:
         secrets_path = os.path.join(os.path.dirname(__file__), ".streamlit", "secrets.toml")
         if os.path.exists(secrets_path):
             try:
                 with open(secrets_path, "r", encoding="utf-8") as f:
                     for line in f:
                         if "DEEPSEEK_API_KEY" in line and "=" in line:
-                            key = line.split("=", 1)[1].strip().strip('"').strip("'")
+                            deep_key = line.split("=", 1)[1].strip().strip('"').strip("'")
                             break
             except Exception:
                 pass
-    return key or ""
+    if deep_key:
+        return "deepseek", deep_key
+
+    return "", ""
+
+def _get_api_key() -> str:
+    """Backwards compatibility helper."""
+    _, key = _get_api_credentials()
+    return key
 
 def compute_kiosk_reading(
     name: str,
@@ -148,9 +196,9 @@ def compute_kiosk_reading(
     """
     Computes full Vedic chart math and generates tailored AI interpretation.
     """
-    api_key = _get_api_key()
+    provider, api_key = _get_api_credentials()
     if not api_key:
-        raise ValueError("API Key not found. Please set DEEPSEEK_API_KEY in environment or secrets.")
+        raise ValueError("API Key not found. Please set ANTHROPIC_API_KEY or DEEPSEEK_API_KEY in environment or secrets.")
 
     # Geolocation
     query_loc = f"{city}, {country}" if country else city
@@ -434,7 +482,6 @@ def compute_kiosk_reading(
         now_utc.year, now_utc.month, now_utc.day,
         now_utc.hour + now_utc.minute / 60.0 + now_utc.second / 3600.0
     )
-    gochar_string = "### LIVE PLANETARY TRANSITS (GOCHAR)\n"
     transit_dict = {}
     for p_id, p_name in PLANETS.items():
         pos_now, _ = swe.calc_ut(jd_now, p_id, flags)
@@ -450,15 +497,6 @@ def compute_kiosk_reading(
             "degree_in_sign": deg_now % 30,
             "status": t_status
         }
-        h_asc = (sign_now_idx - asc_sign_idx) % 12 + 1
-        h_moon = (sign_now_idx - moon_sign_idx) % 12 + 1
-        rashi_key = sign_now_idx + 1
-        t_sav = sav.get(rashi_key, 28)
-        sav_label = "Strong" if t_sav >= 28 else ("Average" if t_sav >= 25 else "Low")
-        gochar_string += (
-            f"{p_name}{rx_tag}: {RASHI_NAMES[sign_now_idx]} ({deg_now % 30:.2f}°) [SAV: {t_sav} ({sav_label})] — "
-            f"House {h_asc} from Lagna, House {h_moon} from Moon\n"
-        )
 
     # Ketu transit
     rahu_now_deg = transit_dict["Rahu"]["degree_total"]
@@ -471,14 +509,28 @@ def compute_kiosk_reading(
         "degree_in_sign": ketu_now_deg % 30,
         "status": "Rx"
     }
-    ketu_h_asc = (ketu_t_sign_idx - asc_sign_idx) % 12 + 1
-    ketu_h_moon = (ketu_t_sign_idx - moon_sign_idx) % 12 + 1
-    ketu_sav = sav.get(ketu_t_sign_idx + 1, 28)
-    ketu_sav_label = "Strong" if ketu_sav >= 28 else ("Average" if ketu_sav >= 25 else "Low")
-    gochar_string += (
-        f"Ketu (Rx): {RASHI_NAMES[ketu_t_sign_idx]} ({ketu_now_deg % 30:.2f}°) [SAV: {ketu_sav} ({ketu_sav_label})] — "
-        f"House {ketu_h_asc} from Lagna, House {ketu_h_moon} from Moon\n"
-    )
+
+    # Transit combustion check
+    for p in ["Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]:
+        if p in transit_dict:
+            transit_dict[p]["combustion"] = (get_combustion_status(p, transit_dict) == "Combust")
+
+    gochar_string = "### LIVE PLANETARY TRANSITS (GOCHAR)\n"
+    for p_name in ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"]:
+        tp = transit_dict[p_name]
+        sign_now_idx = tp["sign_idx"]
+        deg_now = tp["degree_total"]
+        rx_tag = " (Rx)" if tp["status"] == "Rx" else ""
+        comb_tag = " [COMBUST]" if tp.get("combustion") else ""
+        h_asc = (sign_now_idx - asc_sign_idx) % 12 + 1
+        h_moon = (sign_now_idx - moon_sign_idx) % 12 + 1
+        rashi_key = sign_now_idx + 1
+        t_sav = sav.get(rashi_key, 28)
+        sav_label = "Strong" if t_sav >= 28 else ("Average" if t_sav >= 25 else "Low")
+        gochar_string += (
+            f"{p_name}{rx_tag}{comb_tag}: {RASHI_NAMES[sign_now_idx]} ({deg_now % 30:.2f}°) [SAV: {t_sav} ({sav_label})] — "
+            f"House {h_asc} from Lagna, House {h_moon} from Moon\n"
+        )
 
     # Ingress and stations
     transit_events = []
@@ -509,6 +561,20 @@ def compute_kiosk_reading(
     # 13. Detect Yogas & Check Dasha Activation
     detected_yogas = detect_yogas(chart_data, asc_sign_idx)
     yoga_activation = check_yoga_activation(detected_yogas, dasha_data)
+
+    # Filter active auspicious yogas (ban negative yogas like Kemadruma, Daridra, Visha, Grahan, Shakata, Dainya)
+    BANNED_YOGA_KEYWORDS = {"kemadruma", "daridra", "visha", "grahan", "shakata", "guru chandal", "dainya"}
+    active_yogas_list = [
+        {
+            "name": y["name"],
+            "category": y.get("category", "Auspicious Yoga"),
+            "timing": y.get("timing", "Active in current life period"),
+            "desc": y.get("desc", ""),
+            "planets": y.get("planets", [])
+        }
+        for y in yoga_activation
+        if y.get("active") and not any(b in y["name"].lower() for b in BANNED_YOGA_KEYWORDS)
+    ]
 
     yoga_string = "### TOP YOGAS & DASHA ACTIVATION\n"
     if not yoga_activation:
@@ -544,6 +610,10 @@ def compute_kiosk_reading(
             f"in House {pdata['house']}{nak_tag}{rx_tag}{combust_tag}{dignity_tag}\n"
         )
 
+    # 15. Vedic Doshas (Kaal Sarp, Manglik, Pitra)
+    doshas_data = calculate_doshas(chart_data, birth_dt=utc_dt)
+    doshas_string = format_doshas_for_prompt(doshas_data)
+
     # Workflows classification
     workflow_key = classify_workflow(user_question)
     current_date = now_utc.strftime("%d %B %Y")
@@ -563,6 +633,7 @@ def compute_kiosk_reading(
         "{gochar_string}": gochar_string,
         "{yoga_string}": yoga_string,
         "{karaka_string}": karaka_string,
+        "{doshas_string}": doshas_string,
         "{current_date}": current_date,
     }
 
@@ -584,21 +655,48 @@ def compute_kiosk_reading(
     system_prompt += "\n\n### HOUSE SUPPORT INDICATORS (BHAVA BALA)\n" + bhava_bala_string
 
     user_prompt = f"The native asks: <question>{user_question}</question>"
+    if active_yogas_list:
+        active_names = ", ".join([y["name"] for y in active_yogas_list])
+        user_prompt += f"\n\nACTIVE AUSPICIOUS YOGAS IN EFFECT: [{active_names}]. Explicitly name and weave the native's active yoga into the opening cosmic fuel / opportunity analysis as their primary engine of promise."
+    if workflow_key == "predictor_2027":
+        user_prompt += (
+            "\n\nFORMAT INSTRUCTION: Deliver the structured 4-Quarter Milestone Blueprint (Q1, Q2, Q3, Q4) "
+            "with '✦ Where to Push' and '▲ Where to Steer with Care' for each quarter, as specified in the 2027 Milestone Blueprint."
+        )
 
-    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
-    response = client.chat.completions.create(
-        model="deepseek-chat",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ],
-        temperature=0.65,
-        presence_penalty=0.25,
-        frequency_penalty=0.2,
-        max_tokens=1800
-    )
-
-    reading_text = response.choices[0].message.content or ""
+    if provider == "anthropic":
+        anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5")
+        ant_client = anthropic.Anthropic(api_key=api_key)
+        ant_kwargs = {
+            "model": anthropic_model,
+            "system": system_prompt,
+            "messages": [
+                {"role": "user", "content": user_prompt}
+            ],
+            "max_tokens": 4000
+        }
+        # Newer Anthropic models (e.g. claude-sonnet-5) deprecate the temperature parameter
+        if "sonnet-5" not in anthropic_model and "opus-4" not in anthropic_model:
+            ant_kwargs["temperature"] = 0.65
+        else:
+            # Disable thinking for snappy kiosk responses and full token output
+            ant_kwargs["thinking"] = {"type": "disabled"}
+        response = ant_client.messages.create(**ant_kwargs)
+        reading_text = "".join([b.text for b in response.content if getattr(b, "type", "") == "text" or (hasattr(b, "text") and not hasattr(b, "thinking"))]).strip() if response.content else ""
+    else:
+        client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.65,
+            presence_penalty=0.25,
+            frequency_penalty=0.2,
+            max_tokens=1800
+        )
+        reading_text = response.choices[0].message.content or ""
 
     from nakshatra_archetypes import get_nakshatra_archetype
     moon_nak = chart_data["Moon"]["nakshatra"]
@@ -616,6 +714,8 @@ def compute_kiosk_reading(
         "blessing_message": nak_deity["blessing_message"],
         "atmakaraka": atmakaraka,
         "current_dasha": f"{current_mahadasha} - {current_antardasha}" if current_antardasha else current_mahadasha,
+        "doshas": doshas_data["summary"],
+        "active_yogas": active_yogas_list,
         "reading": reading_text,
         "workflow": workflow_key,
         "timestamp": datetime.now().isoformat()

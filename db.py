@@ -853,3 +853,31 @@ def get_reading_by_id(identifier: str, reading_id: int):
             return cur.fetchone()
     finally:
         conn.close()
+
+
+def get_all_recent_readings(limit: int = 100, offset: int = 0):
+    """
+    Return a list of recent readings across all users/guests, newest first.
+    Used for administrative review and prompt tuning.
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                """
+                SELECT id, identifier, customer_name, chart_id, question, answer, workflow, created_at
+                FROM readings
+                ORDER BY created_at DESC
+                LIMIT %s OFFSET %s
+                """,
+                (limit, offset),
+            )
+            rows = cur.fetchall()
+            # Convert datetime objects to string for JSON serialization
+            for r in rows:
+                if r.get("created_at") and hasattr(r["created_at"], "isoformat"):
+                    r["created_at"] = r["created_at"].isoformat()
+            return rows
+    finally:
+        conn.close()
+
