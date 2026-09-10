@@ -711,6 +711,7 @@ def compute_kiosk_reading(
         "2. TIMING INDEPENDENCE (CRITICAL ANTI-REPETITION RULE): Each life area operates on its OWN unique planetary clock and transits. NEVER postpone everything to the next Antardasha change (e.g. late 2026 / Jupiter Antardasha) as a generic answer for every question! Provide specific, independent windows (e.g. next 1–3 months, 3–6 months, seasonal shifts) based strictly on the planetary rulers of the asked topic.\n"
         "3. ZERO BOILERPLATE WARNINGS / NO SADE SATI OBSESSION: Do NOT repeat the same generic warnings about 'heavy responsibility', 'mental pressure', 'laying bricks', or 'emotional strain' across multiple topics. If the user asks about Wealth, focus 100% on financial strategy, income streams, and capital retention. If they ask about Career, focus 100% on professional status, authority, and skill leverage.\n"
         "4. ZERO ASTROLOGICAL JARGON: NEVER recite raw chart coordinates, house numbers, or technical Sanskrit terms without seamless translation into everyday human language.\n"
+        "5. STRICT BREVITY & CONCISENESS (NON-NEGOTIABLE ANTI-FATIGUE RULE): The user is reading this on a screen at an event kiosk. Sprawling essays cause immediate reading fatigue. Deliver maximum astrological clarity in the shortest, crispest possible form. For standard questions: EXACTLY 2 short, punchy paragraphs (approx 90–120 words each; strictly under 240 words total). For 4-quarter year ahead questions: exactly 1 crisp sentence for '✦ Where to Push' and 1 crisp sentence for '▲ Where to Steer with Care' per quarter (strictly under 300 words total). Zero filler, zero repetition, zero academic throat-clearing. Cut straight to actionable guidance.\n"
     )
 
     system_prompt += "\n\n### HOUSE SUPPORT INDICATORS (BHAVA BALA)\n" + bhava_bala_string
@@ -722,19 +723,22 @@ def compute_kiosk_reading(
     if workflow_key == "predictor_2027":
         user_prompt += (
             "\n\nFORMAT INSTRUCTION: Deliver the structured 4-Quarter Milestone Blueprint (Q1, Q2, Q3, Q4) "
-            "with '✦ Where to Push' and '▲ Where to Steer with Care' for each quarter, as specified in the 2027 Milestone Blueprint."
+            "with exactly 1 crisp sentence for '✦ Where to Push' and 1 crisp sentence for '▲ Where to Steer with Care' for each quarter, as specified in the 2027 Milestone Blueprint. Total response strictly under 300 words."
         )
+    else:
+        user_prompt += "\n\nCRITICAL CONCISENESS DIRECTIVE: Keep the entire prediction punchy, crisp, and under 240 words total across 2 short paragraphs so the native gets immediate clarity without reading fatigue."
 
     if provider == "anthropic":
         anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5")
         ant_client = anthropic.Anthropic(api_key=api_key)
+        max_tok = 1100 if workflow_key == "predictor_2027" else 900
         ant_kwargs = {
             "model": anthropic_model,
             "system": system_prompt,
             "messages": [
                 {"role": "user", "content": user_prompt}
             ],
-            "max_tokens": 4000
+            "max_tokens": max_tok
         }
         # Newer Anthropic models (e.g. claude-sonnet-5) deprecate the temperature parameter
         if "sonnet-5" not in anthropic_model and "opus-4" not in anthropic_model:
@@ -746,6 +750,7 @@ def compute_kiosk_reading(
         reading_text = "".join([b.text for b in response.content if getattr(b, "type", "") == "text" or (hasattr(b, "text") and not hasattr(b, "thinking"))]).strip() if response.content else ""
     else:
         client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+        max_tok = 1000 if workflow_key == "predictor_2027" else 850
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[
@@ -755,7 +760,7 @@ def compute_kiosk_reading(
             temperature=0.65,
             presence_penalty=0.25,
             frequency_penalty=0.2,
-            max_tokens=1800
+            max_tokens=max_tok
         )
         reading_text = response.choices[0].message.content or ""
 

@@ -467,12 +467,12 @@ function renderReadingResult(data) {
         if (!meaning) meaning = "Active opportunity and cosmic leverage in your current life period.";
 
         return `
-          <div class="active-yoga-item">
-            <span class="active-yoga-dot">✦</span>
-            <div>
-              <strong class="active-yoga-name">${title}</strong>
-              <span class="active-yoga-separator"> — </span>
-              <span class="active-yoga-meaning">${meaning}</span>
+          <div class="active-yoga-item" style="padding: 10px 14px; background: rgba(14, 13, 20, 0.65); border: 1px solid rgba(229, 185, 76, 0.25); border-radius: 8px; font-size: 1.05rem !important; line-height: 1.55; color: #f5f4f8; display: flex; align-items: baseline; gap: 10px; width: 100%; margin-bottom: 8px;">
+            <span class="active-yoga-dot" style="color: #10b981; font-size: 0.9rem; flex-shrink: 0;">✦</span>
+            <div style="flex: 1; font-size: 1.05rem !important; line-height: 1.55;">
+              <strong class="active-yoga-name" style="font-weight: 700; color: #ffd875; font-size: 1.05rem !important;">${title}</strong>
+              <span class="active-yoga-separator" style="color: rgba(229, 185, 76, 0.5); font-weight: 400; margin: 0 4px;"> — </span>
+              <span class="active-yoga-meaning" style="color: #e2e8f0; font-weight: 400; font-size: 1.05rem !important;">${meaning}</span>
             </div>
           </div>
         `;
