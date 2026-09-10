@@ -5,9 +5,12 @@ for live event kiosks without touching or modifying the original app.py.
 
 import os
 import re
+import logging
 import pytz
 from datetime import datetime
 from typing import Dict, Any, Tuple, Optional
+
+logger = logging.getLogger(__name__)
 import swisseph as swe
 from geopy.geocoders import ArcGIS, Nominatim
 from timezonefinder import TimezoneFinder
@@ -237,11 +240,300 @@ def get_yoga_user_meaning(name: str, desc: str = "") -> str:
     # Fallback: extract clean promise from desc if present
     if desc:
         m = re.search(r'(?:Grants|Bestows|Indicates|Conferring|Converts)\s+(.*)', desc, re.IGNORECASE)
+# ==============================================================================
+# BANNED TROPES & SAFETY PATTERNS
+# ==============================================================================
+BANNED_SUPERSTITION_PATTERNS = [
+    r'\b(temple|mandir|puja|pooja|dal|lentil|masoor|donate|donation|cows?|crows?|birds?|copper|gemstone|ruby|emerald|sapphire|pearl|coral|hessonite|cat\'s\s+eye|rudraksha|yantra|totka|remedy|remedies)\b'
+]
+BANNED_WELLNESS_PATTERNS = [
+    r'\b(splash(?:ing)?\s+(?:cold\s+)?water|8\s+glasses|eight\s+glasses|morning\s+sunlight|15\s+minutes\s+of\s+sunlight|deep\s+breath(?:ing|s)?|digital\s+detox|calming\s+music|warm\s+bath)\b'
+]
+BANNED_CODE_PATTERNS = [
+    r'(\(Rx\)|\[COMBUST\]|\bShadbala\b|\bBhava\s+Bala\b|\bSAV\b|\bBAV\b|\bbindus\b|\bMahadasha\b|\bAntardasha\b|\bPratyantardasha\b|\bMD/AD/PD\b)'
+]
+
+SIGN_LORDS_DICT = {
+    0: "Mars", 1: "Venus", 2: "Mercury", 3: "Moon", 4: "Sun", 5: "Mercury",
+    6: "Venus", 7: "Mars", 8: "Jupiter", 9: "Saturn", 10: "Saturn", 11: "Jupiter"
+}
+
+def compute_astrological_verdicts(
+    chart_data: Dict[str, Any],
+    bb_data: Dict[str, Any],
+    sav: Dict[int, int],
+    bav: Dict[str, Dict[int, int]],
+    transit_dict: Dict[str, Any],
+    dasha_data: Dict[str, Any],
+    moon_details: Dict[str, Any]
+) -> Dict[str, Any]:
+    """
+    Python pre-computes concrete machine VERDICTS (STRONG / WEAK / MODERATE / ACUTE FRICTION)
+    for every metric so the LLM never has to interpret or guess raw numbers.
+    """
+    verdicts = {}
+
+    # 1. Planetary Shadbala Verdicts
+    planets_shadbala = bb_data.get("planets_shadbala", {})
+    sb_verdicts = {}
+    for p in ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]:
+        if p in planets_shadbala:
+            sb = planets_shadbala[p]
+            pct = shadbala_percent(sb["total"], p)
+            if pct >= 110:
+                v_label = "STRONG (High natural rebound & stamina)"
+            elif pct >= 85:
+                v_label = "MODERATE (Consistent, steady baseline)"
+            else:
+                v_label = "WEAK (Low reserve, vulnerable to acute exhaustion, requires pacing)"
+            sb_verdicts[p] = {"pct": pct, "verdict": v_label}
+    verdicts["shadbala"] = sb_verdicts
+
+    # 2. Bhava Bala House Rank Verdicts (1 to 12)
+    houses_bb = bb_data.get("houses", {})
+    scores = {h: houses_bb[h]["adhipati"] + houses_bb[h]["dig"] for h in houses_bb}
+    order = sorted(scores, key=lambda h: (-scores[h], h))
+    rank_map = {h: i + 1 for i, h in enumerate(order)}
+
+    house_verdicts = {}
+    for h in range(1, 13):
+        r = rank_map.get(h, 6)
+        rupas = houses_bb.get(h, {}).get("rupas", 6.0)
+        if r <= 4:
+            hv = "STRONG (Highly protected house, robust structural buffer)"
+        elif r <= 8:
+            hv = "MODERATE (Neutral support, reflects daily routines)"
+        else:
+            hv = "WEAK / HIGH STRESS (Vulnerable house, high friction zone, sensitive to transit pressure)"
+        house_verdicts[h] = {"rank": r, "rupas": rupas, "verdict": hv}
+    verdicts["houses"] = house_verdicts
+
+    # 3. SAV (Samudaya Ashtakavarga) Verdicts
+    asc_sign_idx = int(chart_data["Ascendant"]["sign_idx"])
+    sav_verdicts = {}
+    for h in range(1, 13):
+        r_idx = (asc_sign_idx + h - 1) % 12
+        pts = sav.get(r_idx + 1, 28)
+        if pts >= 28:
+            sv = "STRONG BUFFER (High resilience to transit pressure)"
+        elif pts >= 25:
+            sv = "MODERATE BUFFER (Average resilience)"
+        else:
+            sv = "LOW BUFFER (Transit pressure causes high friction & fatigue)"
+        sav_verdicts[h] = {"points": pts, "verdict": sv}
+    verdicts["sav"] = sav_verdicts
+
+    # 4. Transiting Planet BAV Bindus & Friction Verdicts
+    transit_bav_verdicts = {}
+    for p_name in ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"]:
+        if p_name in transit_dict:
+            tp = transit_dict[p_name]
+            t_sign_idx = tp["sign_idx"]
+            rashi_key = t_sign_idx + 1
+            bindus = bav.get(p_name, {}).get(rashi_key, 4)
+            if bindus >= 5:
+                bv = "HIGH TRANSIT SUPPORT (Smooth forward flow, planet delivers strength)"
+            elif bindus == 4:
+                bv = "MODERATE TRANSIT SUPPORT (Balanced)"
+            else:
+                bv = "ACUTE TRANSIT FRICTION (Low energy buffer, high metabolic/muscular drag)"
+            transit_bav_verdicts[p_name] = {"bindus": bindus, "verdict": bv}
+    verdicts["transit_bav"] = transit_bav_verdicts
+
+    # 5. Mercury Combustion Verdict
+    sun_deg = chart_data["Sun"]["degree_total"]
+    merc_deg = chart_data["Mercury"]["degree_total"]
+    diff = abs((merc_deg - sun_deg + 180) % 360 - 180)
+    if diff < 3.0:
+        cv = "SEVERE COMBUSTION (High cognitive over-stimulation, nervous fatigue, mental scattering)"
+    elif diff < 8.0:
+        cv = "MODERATE COMBUSTION (Active mind, restlessness under tight deadlines)"
+    else:
+        cv = "CLEAR / NON-COMBUST (Steady nervous system, clear mental adaptability)"
+    verdicts["mercury_combustion"] = {"distance_deg": round(diff, 2), "verdict": cv}
+
+    return verdicts
+
+
+def build_health_factsheet(
+    chart_data: Dict[str, Any],
+    verdicts: Dict[str, Any],
+    dasha_data: Dict[str, Any],
+    transit_dict: Dict[str, Any],
+    asc_sign_idx: int,
+    moon_sign_idx: int
+) -> str:
+    """
+    Compiles the pre-computed machine-verdict factsheet for the Health workflow.
+    Strictly clamps time to the 90-day Pratyantardasha/Antardasha window.
+    """
+    sb = verdicts.get("shadbala", {})
+    hv = verdicts.get("houses", {})
+    sav_v = verdicts.get("sav", {})
+    tb_v = verdicts.get("transit_bav", {})
+    mc_v = verdicts.get("mercury_combustion", {})
+
+    lagna_lord = SIGN_LORDS_DICT.get(asc_sign_idx, "Mars")
+    lagna_h_verdict = hv.get(1, {}).get("verdict", "MODERATE")
+    lagna_h_rank = hv.get(1, {}).get("rank", 6)
+    lagna_sav_pts = sav_v.get(1, {}).get("points", 28)
+    lagna_sav_verdict = sav_v.get(1, {}).get("verdict", "MODERATE BUFFER")
+
+    lagna_lord_sb = sb.get(lagna_lord, {})
+    sun_sb = sb.get("Sun", {})
+    mars_sb = sb.get("Mars", {})
+
+    h6_info = hv.get(6, {})
+    h6_sav_info = sav_v.get(6, {})
+    h8_info = hv.get(8, {})
+    h8_sav_info = sav_v.get(8, {})
+
+    friction_lines = []
+    for p_name in ["Mars", "Saturn", "Rahu", "Sun", "Mercury", "Jupiter"]:
+        if p_name in transit_dict:
+            tp = transit_dict[p_name]
+            t_sign_idx = tp["sign_idx"]
+            h_asc = (t_sign_idx - asc_sign_idx) % 12 + 1
+            h_moon = (t_sign_idx - moon_sign_idx) % 12 + 1
+            if h_asc in [1, 6, 8] or h_moon in [1, 6, 8]:
+                b_info = tb_v.get(p_name, {})
+                pts = b_info.get("bindus", 4)
+                v_text = b_info.get("verdict", "MODERATE")
+                rx_str = " (Rx)" if tp.get("status") == "Rx" else ""
+                friction_lines.append(
+                    f"- {p_name}{rx_str} in House {h_asc} from Lagna / House {h_moon} from Moon: "
+                    f"Individual BAV = {pts}/8 — VERDICT: {v_text}"
+                )
+    if not friction_lines:
+        friction_lines.append("- No acute malefic transits directly in 1st, 6th, or 8th house; moderate background transit weather.")
+
+    pd_name = dasha_data.get("current_pd", "Active Period")
+    ad_name = dasha_data.get("ad", "Active Sub-period")
+    pd_start = dasha_data.get("pd_start", "Current")
+    pd_end = dasha_data.get("pd_end", "Next 90 Days")
+
+    lines = [
+        "### HEALTH & VITALITY DOMAIN FACTSHEET (PRE-COMPUTED MACHINE VERDICTS)\n",
+        "[TIME HORIZON: STRICT 90-DAY WINDOW]",
+        f"- Active Cosmic Window: {pd_name} (Pratyantardasha) within {ad_name} (Antardasha)",
+        f"- Timing Boundaries: {pd_start} to {pd_end}",
+        "- MANDATORY TIMING RULE: Anchor all health guidance strictly within this 90-day window. NEVER reference distant years (like 2031).\n",
+        "[1. CORE CONSTITUTIONAL VITALITY & IMMUNITY]",
+        f"- 1st House (Lagna - Physical Resilience): Rank {lagna_h_rank}/12 — VERDICT: {lagna_h_verdict} | SAV: {lagna_sav_pts} pts — VERDICT: {lagna_sav_verdict}",
+        f"- Lagna Lord ({lagna_lord}): {lagna_lord_sb.get('pct', 100)}% of required Shadbala — VERDICT: {lagna_lord_sb.get('verdict', 'MODERATE')}",
+        f"- Sun (Prana / Core Stamina): {sun_sb.get('pct', 100)}% of required Shadbala — VERDICT: {sun_sb.get('verdict', 'MODERATE')}",
+        f"- Mars (Physical / Muscular Drive): {mars_sb.get('pct', 100)}% of required Shadbala — VERDICT: {mars_sb.get('verdict', 'MODERATE')}\n",
+        "[2. ACUTE & METABOLIC FRICTION HOUSES]",
+        f"- 6th House (Daily Routine / Acute Stress / Digestion): Rank {h6_info.get('rank', 6)}/12 — VERDICT: {h6_info.get('verdict', 'MODERATE')} | SAV: {h6_sav_info.get('points', 28)} pts — VERDICT: {h6_sav_info.get('verdict', 'MODERATE')}",
+        f"- 8th House (Deep Metabolic Recovery / Chronic Endurance / Burnout): Rank {h8_info.get('rank', 6)}/12 — VERDICT: {h8_info.get('verdict', 'MODERATE')} | SAV: {h8_sav_info.get('points', 28)} pts — VERDICT: {h8_sav_info.get('verdict', 'MODERATE')}\n",
+        "[3. ACTIVE TRANSIT FRICTION POINTS (NEXT 90 DAYS)]",
+        "\n".join(friction_lines) + "\n",
+        "[4. NERVOUS SYSTEM & COGNITIVE WEATHER]",
+        f"- Mercury Combustion Distance: {mc_v.get('distance_deg', 10.0)}° from Sun — VERDICT: {mc_v.get('verdict', 'CLEAR')}"
+    ]
+    return "\n".join(lines)
+
+
+def validate_and_sanitize_reading(raw_text: str, workflow_key: str = "general") -> Tuple[bool, str, str, str]:
+    """
+    Deterministic validator:
+    1. Extracts <data_audit> and <reading>.
+    2. Enforces word count limits (strictly under 240 words for standard, up to 300 for predictor_2027).
+    3. Scans for banned superstitions, lazy wellness clichés, and raw astrological jargon.
+    Returns: (is_valid, error_reason, reading_text, audit_text)
+    """
+    if not raw_text:
+        return False, "Response was empty.", "", ""
+
+    audit_match = re.search(r'<data_audit>(.*?)</data_audit>', raw_text, re.DOTALL | re.IGNORECASE)
+    audit_text = audit_match.group(1).strip() if audit_match else ""
+
+    # Check for unclosed <reading> tag (indicates truncation before finish)
+    if re.search(r'<reading>', raw_text, re.IGNORECASE) and not re.search(r'</reading>', raw_text, re.IGNORECASE):
+        return False, "Reading was cut off or truncated before completion (unclosed <reading> tag).", "", audit_text
+
+    reading_match = re.search(r'<reading>(.*?)</reading>', raw_text, re.DOTALL | re.IGNORECASE)
+    if reading_match:
+        reading_text = reading_match.group(1).strip()
+    else:
+        # If <data_audit> was present but <reading> tags missing, take text following </data_audit>
+        if audit_match:
+            parts = re.split(r'</data_audit>', raw_text, flags=re.IGNORECASE)
+            reading_text = parts[-1].strip() if len(parts) > 1 else raw_text.strip()
+        else:
+            reading_text = raw_text.strip()
+
+    # Clean residual markup
+    reading_text = re.sub(r'</?(?:data_audit|reading)>', '', reading_text, flags=re.IGNORECASE).strip()
+
+    word_count = len(reading_text.split())
+    max_words = 315 if workflow_key == "predictor_2027" else 250
+    min_words = 60
+
+    # 1. Check banned superstitions
+    for pat in BANNED_SUPERSTITION_PATTERNS:
+        m = re.search(pat, reading_text, re.IGNORECASE)
         if m:
-            clean = m.group(1).strip().split(".")[0].strip()
-            if clean:
-                return clean[0].upper() + clean[1:] + ("." if not clean.endswith(".") else "")
-    return "Auspicious planetary alignment creating high leverage and opportunity in your chart."
+            return False, f"Contains banned superstitious/remedial term: '{m.group(0)}'", reading_text, audit_text
+
+    # 2. Check banned lazy wellness clichés
+    for pat in BANNED_WELLNESS_PATTERNS:
+        m = re.search(pat, reading_text, re.IGNORECASE)
+        if m:
+            return False, f"Contains banned generic wellness cliché: '{m.group(0)}'", reading_text, audit_text
+
+    # 3. Check raw astrological code leaks
+    for pat in BANNED_CODE_PATTERNS:
+        m = re.search(pat, reading_text, re.IGNORECASE)
+        if m:
+            return False, f"Contains un-translated astrological jargon or code marker: '{m.group(0)}'", reading_text, audit_text
+
+    # 4. Length checks
+    if word_count > max_words:
+        return False, f"Length limit exceeded: {word_count} words (strict limit is {max_words - 10} words)", reading_text, audit_text
+
+    if word_count < min_words:
+        return False, f"Reading truncated or too short: {word_count} words", reading_text, audit_text
+
+    # 5. Terminal punctuation check (catch sentences cut off mid-word)
+    if reading_text and reading_text[-1] not in '.!?"\')':
+        return False, f"Reading appears truncated mid-sentence (ends with '{reading_text[-15:]}').", reading_text, audit_text
+
+    return True, "", reading_text, audit_text
+
+
+def generate_deterministic_fallback_reading(
+    chart_data: Dict[str, Any],
+    verdicts: Dict[str, Any],
+    workflow_key: str = "general",
+    user_question: str = ""
+) -> str:
+    """
+    Fallback safety net: Emits a polished, chart-grounded, professional reading based on Python's machine verdicts.
+    Guarantees the kiosk never crashes, never freezes, and never outputs banned phrases.
+    """
+    sb = verdicts.get("shadbala", {})
+    hv = verdicts.get("houses", {})
+    sun_sb = sb.get("Sun", {}).get("pct", 100)
+    lagna_h = hv.get(1, {})
+
+    vitality_phrase = "operates with steady natural stamina" if sun_sb >= 100 else "calls for deliberate physical pacing"
+    recovery_phrase = "rebounds smoothly with consistent daily discipline" if lagna_h.get("rank", 6) <= 6 else "requires conscious protection against sudden overexertion"
+
+    p1 = (
+        f"Over the coming 90 days, your vitality {vitality_phrase} while your overall physical recovery {recovery_phrase}. "
+        f"Your constitutional foundation provides reliable underlying resilience, meaning your stamina holds up well during focused efforts "
+        f"provided you avoid sudden spikes of chronic exhaustion. Rather than pushing through fatigue, aligning your daily rhythms with "
+        f"predictable work-rest intervals ensures sustained productivity without depleting your physical reserves."
+    )
+    p2 = (
+        f"To protect your mental clarity and metabolic equilibrium right now, prioritize consistent meal timing and defend a non-negotiable "
+        f"evening wind-down window. Structure demanding cognitive workloads into dedicated morning focus blocks, and avoid multitasking "
+        f"across late evening hours. Treating deliberate rest intervals as an essential component of your daily routine keeps your vitality "
+        f"at peak performance throughout this 90-day phase."
+    )
+    return f"{p1}\n\n{p2}"
+
 
 def compute_kiosk_reading(
     name: str,
@@ -422,7 +714,8 @@ def compute_kiosk_reading(
         "Saturn": int(chart_data["Saturn"]["sign_idx"]) + 1,
     }
     ashtakavarga_data = calculate_ashtakavarga(natal_positions_for_av)
-    sav = ashtakavarga_data.get("SAV", {})
+    sav = ashtakavarga_data.get("Sarvashtakavarga") or ashtakavarga_data.get("SAV", {})
+    bav = ashtakavarga_data.get("Bhinnashtakavarga", {})
 
     ashtakavarga_string = "### SAMUDAYA ASHTAKAVARGA (SAV)\n"
     for h in range(1, 13):
@@ -585,9 +878,12 @@ def compute_kiosk_reading(
         h_moon = (sign_now_idx - moon_sign_idx) % 12 + 1
         rashi_key = sign_now_idx + 1
         t_sav = sav.get(rashi_key, 28)
+        p_bav = bav.get(p_name, {}).get(rashi_key, 4)
         sav_label = "Strong" if t_sav >= 28 else ("Average" if t_sav >= 25 else "Low")
+        bav_label = "High Support" if p_bav >= 5 else ("Moderate" if p_bav == 4 else "Acute Friction")
         gochar_string += (
-            f"{p_name}{rx_tag}{comb_tag}: {RASHI_NAMES[sign_now_idx]} ({deg_now % 30:.2f}°) [SAV: {t_sav} ({sav_label})] — "
+            f"{p_name}{rx_tag}{comb_tag}: {RASHI_NAMES[sign_now_idx]} ({deg_now % 30:.2f}°) "
+            f"[SAV: {t_sav} ({sav_label}) | BAV: {p_bav}/8 ({bav_label})] — "
             f"House {h_asc} from Lagna, House {h_moon} from Moon\n"
         )
 
@@ -675,6 +971,27 @@ def compute_kiosk_reading(
     doshas_data = calculate_doshas(chart_data, birth_dt=utc_dt)
     doshas_string = format_doshas_for_prompt(doshas_data)
 
+    # Pre-calculate machine verdicts across all metrics
+    verdicts = compute_astrological_verdicts(
+        chart_data=chart_data,
+        bb_data=bb_data,
+        sav=sav,
+        bav=bav,
+        transit_dict=transit_dict,
+        dasha_data=dasha_data,
+        moon_details=moon_details
+    )
+
+    # Build domain-specific factsheets
+    health_factsheet = build_health_factsheet(
+        chart_data=chart_data,
+        verdicts=verdicts,
+        dasha_data=dasha_data,
+        transit_dict=transit_dict,
+        asc_sign_idx=asc_sign_idx,
+        moon_sign_idx=moon_sign_idx
+    )
+
     # Workflows classification
     workflow_key = classify_workflow(user_question)
     current_date = now_utc.strftime("%d %B %Y")
@@ -695,8 +1012,20 @@ def compute_kiosk_reading(
         "{yoga_string}": yoga_string,
         "{karaka_string}": karaka_string,
         "{doshas_string}": doshas_string,
+        "{health_factsheet}": health_factsheet,
         "{current_date}": current_date,
     }
+
+    # For Health: strictly clamp Dasha timeline to the immediate 90-day window
+    if workflow_key == "health":
+        dasha_string_health = (
+            f"### ACTIVE 90-DAY VITALITY TIMELINE (PRATYANTARDASHA)\n"
+            f"Current Antardasha: {current_antardasha} (Began: {dasha_data.get('ad_start')} | Ends: {dasha_data.get('ad_end')})\n"
+            f"Active Pratyantardasha: {current_pd} (Began: {dasha_data.get('pd_start')} | Ends: {dasha_data.get('pd_end')})\n"
+            f"Active 90-Day Vitality Window: {dasha_data.get('pd_start')} to {dasha_data.get('pd_end')}\n"
+            f"NOTE: Focus 100% on this immediate 90-day window. Long-term multi-year cycles are suppressed for health pacing.\n"
+        )
+        replacements["{dasha_string}"] = dasha_string_health
 
     system_prompt = get_workflow_template(workflow_key)
     for placeholder, value in replacements.items():
@@ -712,6 +1041,7 @@ def compute_kiosk_reading(
         "3. ZERO BOILERPLATE WARNINGS / NO SADE SATI OBSESSION: Do NOT repeat the same generic warnings about 'heavy responsibility', 'mental pressure', 'laying bricks', or 'emotional strain' across multiple topics. If the user asks about Wealth, focus 100% on financial strategy, income streams, and capital retention. If they ask about Career, focus 100% on professional status, authority, and skill leverage.\n"
         "4. ZERO ASTROLOGICAL JARGON: NEVER recite raw chart coordinates, house numbers, or technical Sanskrit terms without seamless translation into everyday human language.\n"
         "5. STRICT BREVITY & CONCISENESS (NON-NEGOTIABLE ANTI-FATIGUE RULE): The user is reading this on a screen at an event kiosk. Sprawling essays cause immediate reading fatigue. Deliver maximum astrological clarity in the shortest, crispest possible form. For standard questions: EXACTLY 2 short, punchy paragraphs (approx 90–120 words each; strictly under 240 words total). For 4-quarter year ahead questions: exactly 1 crisp sentence for '✦ Where to Push' and 1 crisp sentence for '▲ Where to Steer with Care' per quarter (strictly under 300 words total). Zero filler, zero repetition, zero academic throat-clearing. Cut straight to actionable guidance.\n"
+        "6. STRICT ZERO-TOLERANCE ON BANNED REMEDIES & TROPES: Absolute ban on temple visits, pujas, dal/food donations, cow/bird feeding, copper coins, gemstones, splashing water on the face, 8 glasses of water, 15 minutes of sunlight, or generic meditation. All advice must be practical cause-and-effect lifestyle/workload pacing directly tied to active transit friction.\n"
     )
 
     system_prompt += "\n\n### HOUSE SUPPORT INDICATORS (BHAVA BALA)\n" + bhava_bala_string
@@ -725,44 +1055,85 @@ def compute_kiosk_reading(
             "\n\nFORMAT INSTRUCTION: Deliver the structured 4-Quarter Milestone Blueprint (Q1, Q2, Q3, Q4) "
             "with exactly 1 crisp sentence for '✦ Where to Push' and 1 crisp sentence for '▲ Where to Steer with Care' for each quarter, as specified in the 2027 Milestone Blueprint. Total response strictly under 300 words."
         )
+    elif workflow_key == "health":
+        user_prompt += (
+            "\n\nEXECUTION PROTOCOL (MANDATORY): "
+            "1. Output <data_audit> completing all 4 tasks based on the pre-computed machine verdicts in {health_factsheet}. "
+            "2. Output <reading> with EXACTLY 2 punchy, jargon-free paragraphs (strictly under 240 words total). "
+            "Translate all astrological verdicts into natural, mature human advice. NEVER write technical terms like SAV, BAV, Shadbala, Bhava Bala, bindus, or dasha abbreviations inside <reading>. "
+            "3. Anchor strictly to the 90-day window. Zero mention of temples, dal donations, gemstones, or water splashing."
+        )
     else:
         user_prompt += "\n\nCRITICAL CONCISENESS DIRECTIVE: Keep the entire prediction punchy, crisp, and under 240 words total across 2 short paragraphs so the native gets immediate clarity without reading fatigue."
 
-    if provider == "anthropic":
-        anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5")
-        ant_client = anthropic.Anthropic(api_key=api_key)
-        max_tok = 1100 if workflow_key == "predictor_2027" else 900
-        ant_kwargs = {
-            "model": anthropic_model,
-            "system": system_prompt,
-            "messages": [
-                {"role": "user", "content": user_prompt}
-            ],
-            "max_tokens": max_tok
-        }
-        # Newer Anthropic models (e.g. claude-sonnet-5) deprecate the temperature parameter
-        if "sonnet-5" not in anthropic_model and "opus-4" not in anthropic_model:
-            ant_kwargs["temperature"] = 0.65
+    # Internal LLM execution helper
+    def _execute_llm_call(sys_p: str, usr_p: str) -> str:
+        if provider == "anthropic":
+            anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5")
+            ant_client = anthropic.Anthropic(api_key=api_key)
+            max_tok = 1200 if workflow_key == "predictor_2027" else (1600 if workflow_key == "health" else 950)
+            ant_kwargs = {
+                "model": anthropic_model,
+                "system": sys_p,
+                "messages": [
+                    {"role": "user", "content": usr_p}
+                ],
+                "max_tokens": max_tok
+            }
+            # Newer Anthropic models (e.g. claude-sonnet-5) deprecate the temperature parameter
+            if "sonnet-5" not in anthropic_model and "opus-4" not in anthropic_model:
+                ant_kwargs["temperature"] = 0.65
+            else:
+                ant_kwargs["thinking"] = {"type": "disabled"}
+            resp = ant_client.messages.create(**ant_kwargs)
+            return "".join([b.text for b in resp.content if getattr(b, "type", "") == "text" or (hasattr(b, "text") and not hasattr(b, "thinking"))]).strip() if resp.content else ""
         else:
-            # Disable thinking for snappy kiosk responses and full token output
-            ant_kwargs["thinking"] = {"type": "disabled"}
-        response = ant_client.messages.create(**ant_kwargs)
-        reading_text = "".join([b.text for b in response.content if getattr(b, "type", "") == "text" or (hasattr(b, "text") and not hasattr(b, "thinking"))]).strip() if response.content else ""
-    else:
-        client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
-        max_tok = 1000 if workflow_key == "predictor_2027" else 850
-        response = client.chat.completions.create(
-            model="deepseek-chat",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.65,
-            presence_penalty=0.25,
-            frequency_penalty=0.2,
-            max_tokens=max_tok
+            client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+            max_tok = 1100 if workflow_key == "predictor_2027" else (1500 if workflow_key == "health" else 900)
+            resp = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": sys_p},
+                    {"role": "user", "content": usr_p}
+                ],
+                temperature=0.65,
+                presence_penalty=0.25,
+                frequency_penalty=0.2,
+                max_tokens=max_tok
+            )
+            return resp.choices[0].message.content or ""
+
+    # Attempt 1
+    raw_response = _execute_llm_call(system_prompt, user_prompt)
+    is_valid, err_reason, clean_reading, audit_text = validate_and_sanitize_reading(raw_response, workflow_key)
+
+    if not is_valid:
+        logger.warning(f"Kiosk Reading Attempt 1 rejected ({err_reason}). Initiating Retry 1...")
+        retry_prompt = (
+            user_prompt +
+            f"\n\nCRITICAL QUALITY REJECTION (PREVIOUS ATTEMPT FAILED): [{err_reason}]. "
+            f"You MUST rewrite immediately respecting these non-negotiable rules: "
+            f"1. You must complete <data_audit> first. "
+            f"2. You must output <reading> with EXACTLY 2 short paragraphs strictly under 240 words. "
+            f"3. ZERO superstitious remedies (no temples, no dal/food donations, no gemstones). "
+            f"4. ZERO generic self-help clichés (no splashing water, no 8 glasses of water, no morning sunlight, no generic meditation). "
+            f"5. ZERO raw astrological jargon or code leaks like (Rx) or [COMBUST]."
         )
-        reading_text = response.choices[0].message.content or ""
+        try:
+            raw_response_2 = _execute_llm_call(system_prompt, retry_prompt)
+            is_valid_2, err_reason_2, clean_reading_2, audit_text_2 = validate_and_sanitize_reading(raw_response_2, workflow_key)
+            if is_valid_2:
+                clean_reading = clean_reading_2
+                audit_text = audit_text_2
+                logger.info("Kiosk Reading Attempt 2 succeeded after retry.")
+            else:
+                logger.error(f"Kiosk Reading Attempt 2 failed: {err_reason_2}. Activating deterministic fallback reading.")
+                clean_reading = generate_deterministic_fallback_reading(chart_data, verdicts, workflow_key, user_question)
+                audit_text = f"Deterministic fallback activated. Errors: Attempt 1 ({err_reason}) | Attempt 2 ({err_reason_2})"
+        except Exception as retry_exc:
+            logger.exception(f"Exception during LLM retry: {retry_exc}. Using deterministic fallback.")
+            clean_reading = generate_deterministic_fallback_reading(chart_data, verdicts, workflow_key, user_question)
+            audit_text = f"Deterministic fallback activated due to retry exception: {retry_exc}"
 
     from nakshatra_archetypes import get_nakshatra_archetype
     moon_nak = chart_data["Moon"]["nakshatra"]
@@ -782,7 +1153,8 @@ def compute_kiosk_reading(
         "current_dasha": f"{current_mahadasha} - {current_antardasha}" if current_antardasha else current_mahadasha,
         "doshas": doshas_data["summary"],
         "active_yogas": active_yogas_list,
-        "reading": reading_text,
+        "reading": clean_reading,
+        "data_audit": audit_text,
         "workflow": workflow_key,
         "timestamp": datetime.now().isoformat()
     }

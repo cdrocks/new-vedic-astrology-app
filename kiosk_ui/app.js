@@ -497,9 +497,38 @@ function renderReadingResult(data) {
   const deityTitleEl = document.getElementById("res-deity-title");
   const deityBlessingEl = document.getElementById("res-deity-blessing");
   const blessingCardEl = document.getElementById("res-blessing-card");
+  const deityImgEl = document.getElementById("res-deity-image");
+  const deityImgWrapEl = document.getElementById("res-deity-img-wrapper");
+
   if (deityTitleEl) deityTitleEl.textContent = deity;
   if (deityBlessingEl) deityBlessingEl.textContent = blessing;
   if (blessingCardEl) blessingCardEl.style.display = "block";
+
+  if (deityImgWrapEl && deityImgEl) {
+    if (data.deity_image || data.image_url) {
+      deityImgEl.src = data.deity_image || data.image_url;
+      deityImgWrapEl.style.display = "block";
+    } else if (data.nakshatra) {
+      // Async background fetch so reading display is instantaneous
+      fetch('/api/divine-blessing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nakshatra: data.nakshatra,
+          atmakaraka: data.atmakaraka || "Jupiter",
+          name: data.name || "Seeker"
+        })
+      })
+      .then(res => res.json())
+      .then(json => {
+        if (json && json.data && json.data.image_url) {
+          deityImgEl.src = json.data.image_url;
+          deityImgWrapEl.style.display = "block";
+        }
+      })
+      .catch(e => console.debug("Deity image background fetch notice:", e));
+    }
+  }
 
   // Scroll reading pane to top
   const scrollPane = document.querySelector(".reading-scroll-pane");
