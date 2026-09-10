@@ -4,6 +4,7 @@ for live event kiosks without touching or modifying the original app.py.
 """
 
 import os
+import re
 import pytz
 from datetime import datetime
 from typing import Dict, Any, Tuple, Optional
@@ -183,6 +184,64 @@ def _get_api_key() -> str:
     """Backwards compatibility helper."""
     _, key = _get_api_credentials()
     return key
+
+YOGA_USER_MEANINGS = {
+    "gajakesari": "Wisdom, lasting public respect, and natural protection from setbacks.",
+    "budhaditya": "Sharp analytical intellect, executive communication, and commercial acumen.",
+    "kendra-trikona": "Leadership authority, rapid professional rise, and executive leverage.",
+    "dharma-karmadhipati": "Fulfilling life purpose, commanding career status, and ethical success.",
+    "maha dhana": "Major wealth multiplication, diverse profit streams, and strong capital growth.",
+    "dhana yoga": "Steady financial resilience, earning power, and wealth preservation.",
+    "lakshmi": "Abundant prosperity, graceful fortune, and enduring material comfort.",
+    "vasumathi": "Self-earned financial independence and compounding prosperity over time.",
+    "chandra-mangala": "Dynamic enterprise instinct, commercial drive, and active wealth creation.",
+    "ruchaka": "Bold courage, physical stamina, command, and decisive victory in competition.",
+    "bhadra": "Sharp business intellect, trade mastery, and executive administrative acumen.",
+    "hamsa": "Profound wisdom, spiritual dignity, sound judgment, and honorable acclaim.",
+    "malavya": "Refined lifestyle, artistic brilliance, magnetic charm, and material comfort.",
+    "sasa": "Relentless stamina, organizational command, and long-term authority.",
+    "amala": "Spotless professional reputation, ethical rise, and lasting social goodwill.",
+    "saraswati": "Creative mastery, deep learning, eloquence, and intellectual acclaim.",
+    "harsha": "Invincibility against obstacles, robust vitality, and triumph over adversaries.",
+    "sarala": "Fearless crisis resolution, breakthrough windfalls, and victory under pressure.",
+    "vimala": "Financial resilience, noble character, and honorable independence.",
+    "neecha bhanga": "Turning early limitations into exceptional late-career mastery.",
+    "adhi": "Executive command, high social status, and natural leadership leverage.",
+    "chandradhi": "Executive command, high social status, and natural leadership leverage.",
+    "maha parivartana": "Mutual synergy between key life areas, multiplying success and rise.",
+    "dainya parivartana": "Deep resilience that transforms hardships into breakthroughs.",
+    "khala parivartana": "Bold personal initiative that masters fluctuating circumstances.",
+    "durudhura": "Balanced fortune, generous comforts, vehicles, and enduring stability.",
+    "sunapha": "Self-earned prosperity, mental agility, and steady life rise.",
+    "anapha": "Magnetic poise, self-command, eloquence, and robust vitality.",
+    "ubhayachari": "Balanced confidence, persuasive speech, and dependable career drive.",
+    "vesi": "Articulate expression, steady determination, and influential connections.",
+    "vosi": "Sharp insight, charitable standing, and wise philosophical outlook.",
+    "kemadruma bhanga": "Overcoming early isolation to develop strong self-reliance."
+}
+
+def clean_yoga_title(name: str) -> str:
+    """Removes technical astrological coordinates and brackets for user-friendly display."""
+    if not name:
+        return ""
+    # Strip trailing technical qualifiers like (Adhi Yoga), (H1-H9), (Pancha Mahapurusha), etc.
+    cleaned = re.sub(r'\s*\((?:Adhi Yoga|Isolation Cancelled|H\d+|Pancha Mahapurusha|H\d+.*?|from Lagna|from Moon|Mars|Sun|Moon|Jupiter|Venus|Saturn|Mercury)\)', '', name).strip()
+    return cleaned or name
+
+def get_yoga_user_meaning(name: str, desc: str = "") -> str:
+    """Returns a concise 5-10 word real-world meaning of what the yoga brings to the native in practice."""
+    name_lower = (name or "").lower()
+    for key, meaning in YOGA_USER_MEANINGS.items():
+        if key in name_lower:
+            return meaning
+    # Fallback: extract clean promise from desc if present
+    if desc:
+        m = re.search(r'(?:Grants|Bestows|Indicates|Conferring|Converts)\s+(.*)', desc, re.IGNORECASE)
+        if m:
+            clean = m.group(1).strip().split(".")[0].strip()
+            if clean:
+                return clean[0].upper() + clean[1:] + ("." if not clean.endswith(".") else "")
+    return "Auspicious planetary alignment creating high leverage and opportunity in your chart."
 
 def compute_kiosk_reading(
     name: str,
@@ -566,7 +625,9 @@ def compute_kiosk_reading(
     BANNED_YOGA_KEYWORDS = {"kemadruma", "daridra", "visha", "grahan", "shakata", "guru chandal", "dainya"}
     active_yogas_list = [
         {
-            "name": y["name"],
+            "name": clean_yoga_title(y["name"]),
+            "original_name": y["name"],
+            "meaning": get_yoga_user_meaning(y["name"], y.get("desc", "")),
             "category": y.get("category", "Auspicious Yoga"),
             "timing": y.get("timing", "Active in current life period"),
             "desc": y.get("desc", ""),

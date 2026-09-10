@@ -405,18 +405,78 @@ function renderReadingResult(data) {
   document.getElementById("res-ak").textContent = data.atmakaraka || "Sun";
   document.getElementById("res-dasha").textContent = data.current_dasha || "Active Period";
 
-  // Render Active Yogas
+  // Render Active Yogas (Body font size with concise user-facing meaning)
   const yogasContainer = document.getElementById("res-yogas-container");
   const yogasList = document.getElementById("res-yogas-list");
   if (yogasContainer && yogasList) {
     if (data.active_yogas && data.active_yogas.length > 0) {
-      yogasList.innerHTML = data.active_yogas.map(y => `
-        <div style="background: rgba(14, 20, 32, 0.85); border: 1px solid rgba(229, 185, 76, 0.4); padding: 5px 12px; border-radius: 6px; font-size: 0.85rem; color: #fff; display: inline-flex; align-items: center; gap: 6px;">
-          <span style="color: #10b981; font-size: 0.65rem;">●</span>
-          <span style="color: #ffd875; font-weight: 700;">${y.name}</span>
-          <span style="font-size: 0.72rem; color: #94a3b8;">[${y.category}]</span>
-        </div>
-      `).join('');
+      const CLIENT_YOGA_MEANINGS = {
+        "gajakesari": "Wisdom, lasting public respect, and natural protection from setbacks.",
+        "budhaditya": "Sharp analytical intellect, executive communication, and commercial acumen.",
+        "kendra-trikona": "Leadership authority, rapid professional rise, and executive leverage.",
+        "dharma-karmadhipati": "Fulfilling life purpose, commanding career status, and ethical success.",
+        "maha dhana": "Major wealth multiplication, diverse profit streams, and strong capital growth.",
+        "dhana yoga": "Steady financial resilience, earning power, and wealth preservation.",
+        "lakshmi": "Abundant prosperity, graceful fortune, and enduring material comfort.",
+        "vasumathi": "Self-earned financial independence and compounding prosperity over time.",
+        "chandra-mangala": "Dynamic enterprise instinct, commercial drive, and active wealth creation.",
+        "ruchaka": "Bold courage, physical stamina, command, and decisive victory in competition.",
+        "bhadra": "Sharp business intellect, trade mastery, and executive administrative acumen.",
+        "hamsa": "Profound wisdom, spiritual dignity, sound judgment, and honorable acclaim.",
+        "malavya": "Refined lifestyle, artistic brilliance, magnetic charm, and material comfort.",
+        "sasa": "Relentless stamina, organizational command, and long-term authority.",
+        "amala": "Spotless professional reputation, ethical rise, and lasting social goodwill.",
+        "saraswati": "Creative mastery, deep learning, eloquence, and intellectual acclaim.",
+        "harsha": "Invincibility against obstacles, robust vitality, and triumph over adversaries.",
+        "sarala": "Fearless crisis resolution, breakthrough windfalls, and victory under pressure.",
+        "vimala": "Financial resilience, noble character, and honorable independence.",
+        "neecha bhanga": "Turning early limitations into exceptional late-career mastery.",
+        "adhi": "Executive command, high social status, and natural leadership leverage.",
+        "chandradhi": "Executive command, high social status, and natural leadership leverage.",
+        "maha parivartana": "Mutual synergy between key life areas, multiplying success and rise.",
+        "dainya parivartana": "Deep resilience that transforms hardships into breakthroughs.",
+        "khala parivartana": "Bold personal initiative that masters fluctuating circumstances.",
+        "durudhura": "Balanced fortune, generous comforts, vehicles, and enduring stability.",
+        "sunapha": "Self-earned prosperity, mental agility, and steady life rise.",
+        "anapha": "Magnetic poise, self-command, eloquence, and robust vitality.",
+        "ubhayachari": "Balanced confidence, persuasive speech, and dependable career drive.",
+        "vesi": "Articulate expression, steady determination, and influential connections.",
+        "vosi": "Sharp insight, charitable standing, and wise philosophical outlook.",
+        "kemadruma bhanga": "Overcoming early isolation to develop strong self-reliance."
+      };
+
+      yogasList.innerHTML = data.active_yogas.map(y => {
+        let title = (y.name || "Auspicious Yoga").replace(/\s*\((?:Adhi Yoga|Isolation Cancelled|H\d+|Pancha Mahapurusha|H\d+.*?|from Lagna|from Moon|Mars|Sun|Moon|Jupiter|Venus|Saturn|Mercury)\)/gi, '').trim();
+        let meaning = y.meaning;
+        if (!meaning) {
+          const nameLow = (y.name || "").toLowerCase();
+          for (const [k, v] of Object.entries(CLIENT_YOGA_MEANINGS)) {
+            if (nameLow.includes(k)) {
+              meaning = v;
+              break;
+            }
+          }
+        }
+        if (!meaning && y.desc) {
+          const match = y.desc.match(/(?:Grants|Bestows|Indicates|Conferring|Converts)\s+(.*)/i);
+          if (match && match[1]) {
+            const clean = match[1].split('.')[0].trim();
+            if (clean) meaning = clean.charAt(0).toUpperCase() + clean.slice(1) + (clean.endsWith('.') ? '' : '.');
+          }
+        }
+        if (!meaning) meaning = "Active opportunity and cosmic leverage in your current life period.";
+
+        return `
+          <div class="active-yoga-item">
+            <span class="active-yoga-dot">✦</span>
+            <div>
+              <strong class="active-yoga-name">${title}</strong>
+              <span class="active-yoga-separator"> — </span>
+              <span class="active-yoga-meaning">${meaning}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
       yogasContainer.style.display = "block";
     } else {
       yogasContainer.style.display = "none";
