@@ -993,8 +993,7 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .reading-markdown h1,
-.reading-markdown h2,
-.reading-markdown h3 {
+.reading-markdown h2 {
   font-family: var(--font-main);
   font-weight: 700;
   color: var(--accent-gold);
@@ -1002,8 +1001,26 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
   margin-bottom: 12px;
 }
 
+.reading-markdown h3 {
+  font-family: var(--font-main);
+  font-weight: 700;
+  font-size: 1.18rem;
+  color: var(--accent-gold, #ffd700);
+  margin-top: 24px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.02em;
+}
+
 .reading-markdown p {
-  margin-bottom: 16px;
+  font-size: 1.12rem;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.92);
+  margin-bottom: 18px;
 }
 
 .reading-markdown ul,

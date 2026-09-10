@@ -30,15 +30,18 @@ TASK 4 - CAUSE-AND-EFFECT CAPITAL STEWARDSHIP (STRICT BAN ON CLICHES):
 </data_audit>
 
 === STAGE 2: CUSTOMER-FACING SYNTHESIS (<reading>) ===
-After completing `<data_audit>`, output `<reading>` containing EXACTLY 2 short, punchy paragraphs (strictly under 240 words total):
+After completing `<data_audit>`, output `<reading>` with TWO DISTINCT, CLEARLY SEPARATED SECTIONS in simple, direct, everyday English (strictly under 220 words total):
 
 <reading>
-[Paragraph 1 (approx. 90–110 words)]: Direct answer to the wealth question in the very first sentence + verified timing window (Month/Year). Spotlight their active auspicious Dhana Yoga or planetary engine as cosmic fuel for income, savings compounding, or asset timing. Synthesize their foundational retention capacity (Task 1) and explain how current transit momentum (Task 2) supports financial growth.
+### ✦ Opportunity & Timing (What’s Working for You)
+[3–4 simple, direct sentences (approx. 70–90 words): Direct answer to the financial question in the very first sentence + best timing window (Month/Year). Spotlight their active auspicious Dhana Yoga or money planet as their growth engine. Use simple everyday English that anyone in India can easily understand.]
 
-[Paragraph 2 (approx. 90–110 words)]: Grounded financial guardrails ("Where to Steer with Care") derived directly from Tasks 3 & 4. Concrete risk management (cash flow leakage traps, avoiding impulsive speculations, establishing liquid reserves, and deliberate negotiation). Zero gambling, lottery, or crypto windfall promises.
+### ▲ What to Watch Out For (Where to Be Careful)
+[3–4 simple, direct sentences (approx. 70–90 words): Clear, practical cautions on where money can leak or what traps to avoid (e.g. avoid risky schemes, keep emergency cash, check terms before signing). Absolutely never merge this with the section above.]
 </reading>
 
 STRICT RULES:
-1. NEVER cite raw scores, house numbers, or astrological codes like `(Rx)` or `[COMBUST]` in `<reading>`. Translate everything into natural, mature financial advice.
-2. NEVER mention technical terms like SAV, BAV, Shadbala, Bhava Bala, bindus, or dasha abbreviations inside `<reading>`.
-3. ABSOLUTE BAN on superstitious remedies and generic self-help tropes.
+1. TWO DISTINCT SECTIONS: You MUST output both headings (`### ✦ Opportunity & Timing...` and `### ▲ What to Watch Out For...`) with a clean line break. Never merge them into one giant paragraph!
+2. SIMPLE EVERYDAY INDIAN ENGLISH: Use short, simple sentences (8 to 14 words). Zero big words or financial jargon. Speak like a wise elder giving practical money advice.
+3. ZERO ASTROLOGICAL JARGON: NEVER cite raw scores, house numbers (2nd house), or codes like `(Rx)` or `[COMBUST]`. Never mention SAV, BAV, Shadbala, Bhava Bala, bindus, or dasha abbreviations inside `<reading>`.
+4. ABSOLUTE BAN on superstitious remedies (temples, fasts, dal/food donations, feeding birds/cows, gemstones) and generic self-help clichés. Zero promises of lottery, gambling, or crypto windfalls.

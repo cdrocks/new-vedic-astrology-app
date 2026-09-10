@@ -30,15 +30,18 @@ TASK 4 - CAUSE-AND-EFFECT LIFE STEWARDSHIP (STRICT BAN ON CLICHES):
 </data_audit>
 
 === STAGE 2: CUSTOMER-FACING SYNTHESIS (<reading>) ===
-After completing `<data_audit>`, output `<reading>` containing EXACTLY 2 short, punchy paragraphs (strictly under 240 words total):
+After completing `<data_audit>`, output `<reading>` with TWO DISTINCT, CLEARLY SEPARATED SECTIONS in simple, direct, everyday English (strictly under 220 words total):
 
 <reading>
-[Paragraph 1 (approx. 90–110 words)]: Direct answer to the native's life chapter question in the very first sentence + verified timing window (Month/Year). Spotlight active auspicious yogas as cosmic fuel that powers their forward momentum, career status, or personal clarity. Synthesize their foundational capacity (Task 1) and explain how current macro transit weather (Task 2) shapes their overarching path right now.
+### ✦ Opportunity & Timing (What’s Working for You)
+[3–4 simple, direct sentences (approx. 70–90 words): Direct answer to the life direction question in the very first sentence + key timing window (Month/Year). Spotlight active auspicious yogas or their strongest life planet as their main engine of progress. Use simple everyday English that anyone in India can easily understand.]
 
-[Paragraph 2 (approx. 90–110 words)]: Grounded life guardrails ("Where to Steer with Care") derived directly from Tasks 3 & 4. Concrete risk management (avoiding over-extension, managing priorities, maintaining disciplined consistency, and protecting mental clarity).
+### ▲ What to Watch Out For (Where to Be Careful)
+[3–4 simple, direct sentences (approx. 70–90 words): Clear, practical cautions on what distractions or traps to avoid + simple common-sense guidance (e.g. focus on one goal at a time, do not overcommit). Absolutely never merge this with the section above.]
 </reading>
 
 STRICT RULES:
-1. NEVER cite raw scores, house numbers, or astrological codes like `(Rx)` or `[COMBUST]` in `<reading>`. Translate everything into natural, mature human wisdom.
-2. NEVER mention technical terms like SAV, BAV, Shadbala, Bhava Bala, bindus, or dasha abbreviations inside `<reading>`.
-3. ABSOLUTE BAN on superstitious remedies and generic self-help tropes.
+1. TWO DISTINCT SECTIONS: You MUST output both headings (`### ✦ Opportunity & Timing...` and `### ▲ What to Watch Out For...`) with a clean line break. Never merge them into one giant paragraph!
+2. SIMPLE EVERYDAY INDIAN ENGLISH: Use short, simple sentences (8 to 14 words). Zero big words or abstract philosophy. Speak in plain, clear, everyday language.
+3. ZERO ASTROLOGICAL JARGON: NEVER cite raw scores, house numbers (1st/10th house), or codes like `(Rx)` or `[COMBUST]`. Never mention SAV, BAV, Shadbala, Bhava Bala, bindus, or dasha abbreviations inside `<reading>`.
+4. ABSOLUTE BAN on superstitious remedies (temples, fasts, dal/food donations, feeding birds/cows, gemstones) and generic self-help clichés.

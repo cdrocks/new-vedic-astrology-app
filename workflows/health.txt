@@ -35,15 +35,19 @@ TASK 4 - CAUSE-AND-EFFECT LIFESTYLE ACTION DERIVATION (STRICT BAN ON CLICHES):
 </data_audit>
 
 === STAGE 2: CUSTOMER-FACING SYNTHESIS (<reading>) ===
-After completing `<data_audit>`, output `<reading>` containing EXACTLY 2 short, punchy paragraphs (strictly under 240 words total):
+After completing `<data_audit>`, output `<reading>` with TWO DISTINCT, CLEARLY SEPARATED SECTIONS in simple, direct, everyday English (strictly under 220 words total):
 
 <reading>
-[Paragraph 1 (approx. 90–110 words)]: Direct answer to the native's vitality question in the very first sentence. Ground the prediction in the active 90-day window (Month/Year). Synthesize their constitutional baseline (Task 1) and explain how current planetary transit rhythms (Task 2) are shaping their physical energy right now.
+### ✦ Opportunity & Timing (What’s Working for You)
+[3–4 simple, direct sentences (approx. 70–90 words): Direct answer to the health and vitality question in the very first sentence. Ground the prediction strictly in the next 90 days (Month/Year). Highlight their natural stamina baseline and the best weeks to build strength. Use simple everyday English that anyone in India can easily understand.]
 
-[Paragraph 2 (approx. 90–110 words)]: Grounded cause-and-effect lifestyle pacing and workload guardrails derived directly from Tasks 3 & 4. Explain why specific pacing mechanisms (e.g. meal timing, workload boundaries, deliberate recovery blocks) realistically protect their stamina and cognitive focus over these 90 days.
+### ▲ What to Watch Out For (Where to Be Careful)
+[3–4 simple, direct sentences (approx. 70–90 words): Clear, practical cautions on energy drains or physical friction over these 90 days + simple common-sense lifestyle actions (e.g. eating meals on time, sleeping at a fixed hour, taking short breathers). Absolutely never merge this with the section above.]
 </reading>
 
 STRICT RULES:
-1. STRICT 90-DAY HORIZON: Only address the next 90 days. Never reference 10-year dasha end dates (e.g. 2031).
-2. NEVER cite technical astrological terms, acronyms, scores, or codes in <reading> (e.g. SAV, BAV, Shadbala, Bhava Bala, bindus, (Rx), [COMBUST], Mahadasha, Antardasha, Pratyantardasha). Translate all concepts into natural, mature human language.
-3. ABSOLUTE BAN on superstitious remedies and generic self-help tropes.
+1. TWO DISTINCT SECTIONS: You MUST output both headings (`### ✦ Opportunity & Timing...` and `### ▲ What to Watch Out For...`) with a clean line break. Never merge them into one giant paragraph!
+2. STRICT 90-DAY HORIZON: Only address the next 90 days. Never reference 10-year dasha end dates (e.g. 2031).
+3. SIMPLE EVERYDAY INDIAN ENGLISH: Use short, simple sentences (8 to 14 words). Zero medical jargon (no "metabolic equilibrium", "cognitive scattering", etc.). Speak in plain, common-sense words.
+4. ZERO ASTROLOGICAL JARGON: NEVER cite raw scores, house numbers, or codes like `(Rx)` or `[COMBUST]`. Never mention SAV, BAV, Shadbala, Bhava Bala, bindus, or dasha abbreviations inside `<reading>`.
+5. ABSOLUTE BAN on superstitious remedies (temples, fasts, dal/food donations, feeding birds/cows, gemstones) and generic self-help clichés (splashing water, 8 glasses of water, morning sunlight, generic meditation).

@@ -30,16 +30,19 @@ TASK 4 - CAUSE-AND-EFFECT PARENTING & READINESS GUARDRAILS (STRICT COMPLIANCE):
 </data_audit>
 
 === STAGE 2: CUSTOMER-FACING SYNTHESIS (<reading>) ===
-After completing `<data_audit>`, output `<reading>` containing EXACTLY 2 short, punchy paragraphs (strictly under 240 words total):
+After completing `<data_audit>`, output `<reading>` with TWO DISTINCT, CLEARLY SEPARATED SECTIONS in simple, direct, everyday English (strictly under 220 words total):
 
 <reading>
-[Paragraph 1 (approx. 90–110 words)]: Direct answer to the family expansion timing question in the very first sentence + verified timing window (Month/Year). Spotlight their active auspicious yoga or ruling planetary engine as cosmic support. Synthesize their foundational capacity (Task 1) and explain how current transit support and emotional readiness (Task 2) align for domestic growth.
+### ✦ Opportunity & Timing (What’s Working for You)
+[3–4 simple, direct sentences (approx. 70–90 words): Direct answer to the family expansion timing question in the very first sentence + best astrological window (Month/Year). Spotlight their supportive planetary baseline and domestic harmony. Use simple everyday English that anyone in India can easily understand.]
 
-[Paragraph 2 (approx. 90–110 words)]: Grounded emotional and domestic guardrails ("Where to Steer with Care") derived directly from Tasks 3 & 4. Concrete guidance on nurturing readiness, establishing shared domestic rhythms, managing stress, and pacing family transitions with patience.
+### ▲ What to Watch Out For (Where to Be Careful)
+[3–4 simple, direct sentences (approx. 70–90 words): Clear, practical guidance on domestic readiness (e.g. keep stress low, manage household routines together, avoid anxiety or rushing). Absolutely never merge this with the section above.]
 </reading>
 
 STRICT RULES:
-1. NEVER predict the gender or exact number of children; NEVER give medical, clinical, or fertility advice.
-2. NEVER cite raw scores, house numbers, or astrological codes like `(Rx)` or `[COMBUST]` in `<reading>`. Translate everything into natural, mature counsel.
-3. NEVER mention technical terms like SAV, BAV, Shadbala, Bhava Bala, bindus, or dasha abbreviations inside `<reading>`.
-4. ABSOLUTE BAN on superstitious remedies and generic self-help tropes.
+1. TWO DISTINCT SECTIONS: You MUST output both headings (`### ✦ Opportunity & Timing...` and `### ▲ What to Watch Out For...`) with a clean line break. Never merge them into one giant paragraph!
+2. NEVER predict gender or number of children; NEVER give medical or fertility advice.
+3. SIMPLE EVERYDAY INDIAN ENGLISH: Use short, simple sentences (8 to 14 words). Speak with warmth and common sense.
+4. ZERO ASTROLOGICAL JARGON: NEVER cite raw scores, house numbers (5th house), or codes like `(Rx)` or `[COMBUST]`. Never mention SAV, BAV, Shadbala, Bhava Bala, bindus, or dasha abbreviations inside `<reading>`.
+5. ABSOLUTE BAN on superstitious remedies and generic self-help tropes.

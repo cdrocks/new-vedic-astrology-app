@@ -634,83 +634,87 @@ def generate_deterministic_fallback_reading(
     lagna_h = hv.get(1, {})
 
     if workflow_key == "health":
-        vitality_phrase = "operates with steady natural stamina" if sun_sb >= 100 else "calls for deliberate physical pacing"
-        recovery_phrase = "rebounds smoothly with consistent daily discipline" if lagna_h.get("rank", 6) <= 6 else "requires conscious protection against sudden overexertion"
+        vitality_phrase = "operates with steady daily stamina" if sun_sb >= 100 else "needs steady physical pacing"
+        recovery_phrase = "recovers smoothly with regular daily habits" if lagna_h.get("rank", 6) <= 6 else "needs care against sudden exhaustion"
         p1 = (
-            f"Over the coming 90 days, your vitality {vitality_phrase} while your overall physical recovery {recovery_phrase}. "
-            f"Your constitutional foundation provides reliable underlying resilience, meaning your stamina holds up well during focused efforts "
-            f"provided you avoid sudden spikes of chronic exhaustion. Rather than pushing through fatigue, aligning your daily rhythms with "
-            f"predictable work-rest intervals ensures sustained productivity without depleting your physical reserves."
+            f"Over the coming 90 days, your physical energy {vitality_phrase}, and your body {recovery_phrase}. "
+            f"Your natural health foundation is reliable, so your stamina holds up well during regular daily work. "
+            f"The key is to take short breathers instead of pushing through fatigue. "
+            f"Keeping a steady daily rhythm will help you stay active and fresh throughout this period."
         )
         p2 = (
-            f"To protect your mental clarity and metabolic equilibrium right now, prioritize consistent meal timing and defend a non-negotiable "
-            f"evening wind-down window. Structure demanding cognitive workloads into dedicated morning focus blocks, and avoid multitasking "
-            f"across late evening hours. Treating deliberate rest intervals as an essential component of your daily routine keeps your vitality "
-            f"at peak performance throughout this 90-day phase."
+            f"To protect your energy right now, eat your meals on time and sleep at a fixed hour each night. "
+            f"Do heavy mental tasks in the morning when your mind is sharp, and avoid working late into the night. "
+            f"Do not take on extra commitments when your body feels tired. "
+            f"Simple, regular daily rest will keep you feeling energetic over the next 90 days."
         )
-        return f"{p1}\n\n{p2}"
+        return f"### ✦ Opportunity & Timing (What’s Working for You)\n{p1}\n\n### ▲ What to Watch Out For (Where to Be Careful)\n{p2}"
 
     elif workflow_key in ["career", "generic_career"]:
-        authority_phrase = "operates with strong authority and upward leverage" if h10.get("rank", 6) <= 6 else "calls for strategic consolidation and disciplined execution"
-        discipline_phrase = "rewards structured responsibility and proven capability" if sat_sb >= 100 else "demands deliberate patience when navigating team dynamics"
+        authority_phrase = "brings good authority and steady progress" if h10.get("rank", 6) <= 6 else "calls for patience and consistent work"
+        discipline_phrase = "rewards reliable performance and clear results" if sat_sb >= 100 else "suggests keeping calm with coworkers"
         p1 = (
-            f"Over the coming 3 to 6 months, your professional momentum {authority_phrase}, anchored by your foundational career baseline. "
-            f"Current planetary weather {discipline_phrase}, indicating that demonstrating dependable competence and solving high-impact problems "
-            f"will open more doors than forcing premature transitions. Your underlying drive remains capable of handling increased responsibility "
-            f"provided you channel your energy into visible, measurable deliverables."
+            f"Over the coming 3 to 6 months, your career momentum {authority_phrase}. "
+            f"Current planetary positions {discipline_phrase}, showing that completing high-priority tasks well will bring recognition. "
+            f"This is a favorable window to demonstrate your skills and take on meaningful responsibilities. "
+            f"Your steady hard work now sets you up for a solid promotion or new role."
         )
         p2 = (
-            f"To maximize your career trajectory and safeguard your professional reputation right now, focus on transparent stakeholder alignment "
-            f"and avoid uncalculated confrontations across team boundaries. Verify all written commitments and contract details thoroughly before "
-            f"making major directional moves. Maintaining consistent daily execution while steering clear of workplace friction ensures your authority "
-            f"grows steadily throughout this cycle."
+            f"To protect your career growth right now, avoid getting into workplace arguments or office gossip. "
+            f"Do not rely only on verbal promises; ensure all important agreements and terms are clearly confirmed in writing or email. "
+            f"Stay patient if decisions take slightly longer than expected. "
+            f"Staying focused on your own deliverables will help your reputation grow steadily."
         )
-        return f"{p1}\n\n{p2}"
+        return f"### ✦ Opportunity & Timing (What’s Working for You)\n{p1}\n\n### ▲ What to Watch Out For (Where to Be Careful)\n{p2}"
 
     elif workflow_key == "wealth":
-        wealth_phrase = "points to steady cash flow retention and compounding stability" if h2.get("rank", 6) <= 6 else "calls for disciplined liquidity management and budget guardrails"
-        growth_phrase = "favors structured, long-term capital preservation" if jup_sb >= 100 else "advises against speculative acceleration or impulsive spending"
+        wealth_phrase = "shows steady earnings and good savings potential" if h2.get("rank", 6) <= 6 else "calls for careful budgeting and tracking expenses"
+        growth_phrase = "supports safe, long-term savings" if jup_sb >= 100 else "advises against risky bets or impulsive buys"
         p1 = (
-            f"Over the coming months, your financial outlook {wealth_phrase}, supported by your underlying material foundation. "
-            f"Your chart indicates reliable capacity for capital accumulation, meaning steady efforts compound effectively provided you avoid "
-            f"unnecessary leaks in non-essential expenditures. This is a favorable phase for building financial security through methodical savings "
-            f"rather than chasing high-risk windfalls."
+            f"Over the coming months, your financial situation {wealth_phrase}. "
+            f"Your chart indicates a steady ability to build wealth when you save consistently each month. "
+            f"This period {growth_phrase}, meaning patient and structured planning will give you the best results. "
+            f"Focusing on building dependable assets now will strengthen your financial peace of mind."
         )
         p2 = (
-            f"To protect your net worth and maintain healthy liquidity right now, establish clear spending limits and defend an emergency cash reserve. "
-            f"Pace major acquisitions deliberately and resist the temptation to make speculative investments during emotionally volatile market cycles. "
-            f"Focusing on debt reduction, capital retention, and methodical budgeting will ensure your financial resilience expands steadily across this window."
+            f"To protect your hard-earned money right now, set clear monthly budgets and keep aside some emergency cash. "
+            f"Avoid quick-money schemes or impulsive spending on luxury items you do not urgently need. "
+            f"Check all terms and fine print carefully before lending money or signing financial documents. "
+            f"Methodical saving and paying down debt will give you solid financial stability."
         )
-        return f"{p1}\n\n{p2}"
+        return f"### ✦ Opportunity & Timing (What’s Working for You)\n{p1}\n\n### ▲ What to Watch Out For (Where to Be Careful)\n{p2}"
 
     elif workflow_key in ["relationships", "marriage"]:
-        rel_phrase = "centers on harmonious mutual understanding and shared alignment" if h7.get("rank", 6) <= 6 else "calls for conscious emotional patience and healthy communication boundaries"
-        grace_phrase = "supports deeper emotional bonding when expectations are clearly voiced" if ven_sb >= 100 else "counsels against assuming feelings or letting silent grievances build"
+        rel_phrase = "brings good mutual understanding and warmth" if h7.get("rank", 6) <= 6 else "calls for emotional patience and open communication"
+        grace_phrase = "deepens bonding when both sides speak openly" if ven_sb >= 100 else "reminds you not to assume things without asking"
         p1 = (
-            f"Over the coming months, your relationship environment {rel_phrase}, supported by your underlying partnership foundation. "
-            f"Planetary influences indicate that mutual respect and emotional connection grow steadily provided both partners communicate with "
-            f"openness and vulnerability. This phase {grace_phrase}, making honest and mature dialogue your strongest tool for lasting harmony."
+            f"Over the coming months, your relationship environment {rel_phrase}. "
+            f"The planetary weather {grace_phrase}, making honest and gentle conversations your greatest strength. "
+            f"When you make time for each other, mutual trust and closeness grow naturally. "
+            f"This is a promising period for building long-term harmony and shared happiness."
         )
         p2 = (
-            f"To navigate interpersonal rhythms constructively right now, give each other space during high-pressure work weeks and address emerging "
-            f"misunderstandings early before they escalate. Practice active listening rather than reacting defensively during sensitive discussions. "
-            f"Prioritizing calm mutual appreciation and shared quality time will keep your connection grounded and resilient throughout this period."
+            f"To keep your bond strong right now, give each other breathing room during busy workdays. "
+            f"Do not bottle up small misunderstandings; discuss them calmly before they turn into arguments. "
+            f"Listen with patience instead of reacting quickly when sensitive family topics come up. "
+            f"Warm appreciation and regular quality time will keep your connection strong and joyful."
         )
-        return f"{p1}\n\n{p2}"
+        return f"### ✦ Opportunity & Timing (What’s Working for You)\n{p1}\n\n### ▲ What to Watch Out For (Where to Be Careful)\n{p2}"
 
     else:
         p1 = (
-            f"Over the coming months, your life momentum operates on a dependable foundation that supports steady progress when your efforts "
-            f"are channeled into clear, singular priorities. Your chart reveals strong underlying resilience, indicating that you have the stamina "
-            f"and focus to handle demanding circumstances as long as you pace yourself deliberately and avoid spreading your energy across too many "
-            f"competing commitments simultaneously."
+            f"Over the coming months, your life moves forward with steady support when you focus on one main goal at a time. "
+            f"Your chart shows good personal resilience, meaning you have the stamina to handle demanding situations well. "
+            f"Taking steady steps each week will bring much better outcomes than trying to do everything at once. "
+            f"Trust your steady efforts to build lasting progress across this cycle."
         )
         p2 = (
-            f"To navigate this period with maximum effectiveness right now, establish structured daily habits and protect your focus against "
-            f"unproductive distractions. Verify important details thoroughly before finalizing major life decisions, and approach new opportunities "
-            f"with measured discernment. Maintaining consistent personal discipline and patience will ensure your long-term goals advance securely."
+            f"To make the most of this period right now, stick to simple daily routines and avoid unproductive distractions. "
+            f"Check important details carefully before making major life commitments, and do not rush decisions out of pressure. "
+            f"Keep your focus clear and avoid taking on more than you can comfortably manage. "
+            f"Patience, regular habits, and calm focus will guide you forward securely."
         )
-        return f"{p1}\n\n{p2}"
+        return f"### ✦ Opportunity & Timing (What’s Working for You)\n{p1}\n\n### ▲ What to Watch Out For (Where to Be Careful)\n{p2}"
 
 
 def compute_kiosk_reading(
@@ -1235,23 +1239,32 @@ def compute_kiosk_reading(
             "\n\nEXECUTION PROTOCOL (MANDATORY): "
             "1. Output <data_audit> completing the 4-task internal worksheet based on the pre-computed machine verdicts in {topic_factsheet}. "
             "2. Output <reading> delivering the structured 4-Quarter Milestone Blueprint (Q1, Q2, Q3, Q4) with exactly 1 crisp sentence for '✦ Where to Push' and 1 crisp sentence for '▲ Where to Steer with Care' for each quarter, as specified in the 2027 Milestone Blueprint. Total reading strictly under 300 words. "
-            "Translate all astrological verdicts into natural, mature human advice. NEVER write technical terms like SAV, BAV, Shadbala, Bhava Bala, bindus, or dasha abbreviations inside <reading>."
+            "3. Use simple, direct everyday Indian English with short sentences (8-14 words). Zero big words or heavy corporate buzzwords. "
+            "4. Translate all astrological verdicts into natural, mature human advice. NEVER write technical terms like SAV, BAV, Shadbala, Bhava Bala, bindus, or dasha abbreviations inside <reading>."
         )
     elif workflow_key == "health":
         user_prompt += (
             "\n\nEXECUTION PROTOCOL (MANDATORY): "
             "1. Output <data_audit> completing all 4 tasks based on the pre-computed machine verdicts in {topic_factsheet}. "
-            "2. Output <reading> with EXACTLY 2 punchy, jargon-free paragraphs (strictly under 240 words total). "
-            "Translate all astrological verdicts into natural, mature human advice. NEVER write technical terms like SAV, BAV, Shadbala, Bhava Bala, bindus, or dasha abbreviations inside <reading>. "
-            "3. Anchor strictly to the 90-day window. Zero mention of temples, dal donations, gemstones, or water splashing."
+            "2. Output <reading> with TWO DISTINCT, CLEARLY SEPARATED SECTIONS in simple, direct, everyday English (strictly under 220 words total):\n"
+            "   ### ✦ Opportunity & Timing (What’s Working for You)\n"
+            "   [3-4 simple, direct sentences: Direct answer to vitality question in first sentence + 90-day timing window + supportive strengths]\n\n"
+            "   ### ▲ What to Watch Out For (Where to Be Careful)\n"
+            "   [3-4 simple, direct sentences: Practical cautions on energy drains + simple common-sense lifestyle actions. Never merge with section above]\n"
+            "3. Anchor strictly to the 90-day window. Zero mention of temples, dal donations, gemstones, or water splashing. "
+            "4. Simple everyday Indian English only: short sentences (8-14 words), no heavy corporate or medical jargon (no 'metabolic equilibrium', 'cognitive scattering'), no astrological codes."
         )
     else:
         user_prompt += (
             "\n\nEXECUTION PROTOCOL (MANDATORY): "
             "1. Output <data_audit> completing all 4 tasks concisely (brief bullet lines, strictly under 200 words total) based on the pre-computed machine verdicts in {topic_factsheet}. "
-            "2. Output <reading> with EXACTLY 2 punchy, jargon-free paragraphs (strictly under 240 words total). "
-            "Translate all astrological verdicts into natural, mature human advice. NEVER write technical terms like SAV, BAV, Shadbala, Bhava Bala, bindus, or dasha abbreviations inside <reading>. "
-            "3. Ground all timing in verified planetary windows (next 1–3 months, 3–8 months). Zero mention of superstitious rituals, donations, or generic wellness tropes."
+            "2. Output <reading> with TWO DISTINCT, CLEARLY SEPARATED SECTIONS in simple, direct, everyday English (strictly under 220 words total):\n"
+            "   ### ✦ Opportunity & Timing (What’s Working for You)\n"
+            "   [3-4 simple, direct sentences: Direct answer to question in first sentence + timing window + supportive strengths/active yogas]\n\n"
+            "   ### ▲ What to Watch Out For (Where to Be Careful)\n"
+            "   [3-4 simple, direct sentences: Practical cautions + common-sense guardrails. Never merge with section above]\n"
+            "3. Ground all timing in verified planetary windows (next 1–3 months, 3–8 months). Zero mention of superstitious rituals, donations, or generic wellness tropes. "
+            "4. Simple everyday Indian English only: short sentences (8-14 words), zero corporate jargon (no 'stakeholder alignment', 'metabolic pacing', etc.), zero astrological jargon."
         )
 
     # Internal LLM execution helper
@@ -1311,10 +1324,14 @@ def compute_kiosk_reading(
             f"\n\nCRITICAL QUALITY REJECTION (PREVIOUS ATTEMPT FAILED): [{err_reason}]. "
             f"You MUST rewrite immediately respecting these non-negotiable rules: "
             f"1. You must complete <data_audit> first. "
-            f"2. You must output <reading> with EXACTLY 2 short paragraphs strictly under 240 words. "
-            f"3. ZERO superstitious remedies (no temples, no dal/food donations, no gemstones). "
-            f"4. ZERO generic self-help clichés (no splashing water, no 8 glasses of water, no morning sunlight, no generic meditation). "
-            f"5. ZERO raw astrological jargon or code leaks like (Rx), [COMBUST], Bhava Bala, Shadbala, SAV, BAV, or house numbers inside <reading>."
+            f"2. You must output <reading> with TWO DISTINCT SECTIONS strictly under 220 words:\n"
+            f"   ### ✦ Opportunity & Timing (What’s Working for You)\n"
+            f"   ### ▲ What to Watch Out For (Where to Be Careful)\n"
+            f"   NEVER merge them into one giant paragraph! "
+            f"3. Use simple everyday Indian English with short sentences (8-14 words). No corporate or academic jargon. "
+            f"4. ZERO superstitious remedies (no temples, no dal/food donations, no gemstones). "
+            f"5. ZERO generic self-help clichés (no splashing water, no 8 glasses of water, no morning sunlight, no generic meditation). "
+            f"6. ZERO raw astrological jargon or code leaks like (Rx), [COMBUST], Bhava Bala, Shadbala, SAV, BAV, or house numbers inside <reading>."
         )
         try:
             raw_response_2 = _execute_llm_call(system_prompt, retry_prompt)
