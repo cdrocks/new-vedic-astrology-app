@@ -16,6 +16,7 @@ from kiosk_core import (
     generate_deterministic_fallback_reading,
     compute_astrological_verdicts,
     build_health_factsheet,
+    build_topic_factsheet,
     BANNED_SUPERSTITION_PATTERNS,
     BANNED_WELLNESS_PATTERNS,
     BANNED_CODE_PATTERNS
@@ -227,3 +228,115 @@ def test_factsheet_and_verdicts_integration():
     assert "VERDICT:" in factsheet
     assert "Mars in House 1 from Lagna" in factsheet
     assert "Saturn (Rx) in House 8 from Lagna" in factsheet
+
+
+def test_topic_factsheet_generation_multidomain():
+    mock_chart = {
+        "Ascendant": {"sign": "Aries", "sign_idx": 0, "degree_in_sign": 15.0},
+        "Sun": {"sign": "Leo", "sign_idx": 4, "degree_total": 125.0, "degree_in_sign": 5.0},
+        "Mars": {"sign": "Scorpio", "sign_idx": 7, "degree_total": 215.0, "degree_in_sign": 5.0},
+        "Moon": {"sign": "Taurus", "sign_idx": 1, "degree_total": 45.0, "degree_in_sign": 15.0},
+        "Mercury": {"sign": "Virgo", "sign_idx": 5, "degree_total": 127.0, "degree_in_sign": 7.0},
+        "Jupiter": {"sign": "Sagittarius", "sign_idx": 8, "degree_total": 245.0, "degree_in_sign": 5.0},
+        "Venus": {"sign": "Libra", "sign_idx": 6, "degree_total": 185.0, "degree_in_sign": 5.0},
+        "Saturn": {"sign": "Capricorn", "sign_idx": 9, "degree_total": 275.0, "degree_in_sign": 5.0},
+    }
+    mock_bb = {
+        "planets_shadbala": {
+            "Sun": {"total": 450.0},
+            "Moon": {"total": 380.0},
+            "Mars": {"total": 320.0},
+            "Mercury": {"total": 400.0},
+            "Jupiter": {"total": 410.0},
+            "Venus": {"total": 350.0},
+            "Saturn": {"total": 280.0},
+        },
+        "houses": {
+            h: {"adhipati": 300.0 + h * 10, "dig": 30.0, "rupas": 6.5}
+            for h in range(1, 13)
+        }
+    }
+    sav = {r: 28 for r in range(1, 13)}
+    sav[10] = 34
+    sav[2] = 31
+    sav[7] = 29
+    bav = {"Mars": {r: 4 for r in range(1, 13)}, "Saturn": {r: 5 for r in range(1, 13)}}
+    transit_dict = {
+        "Jupiter": {"sign_idx": 1, "status": "Dir"},
+        "Saturn": {"sign_idx": 10, "status": "Dir"},
+    }
+    dasha_data = {
+        "ad": "Jupiter",
+        "current_pd": "Sun",
+        "ad_start": "Jan 2026",
+        "ad_end": "Dec 2028",
+        "pd_start": "01 Sep 2026",
+        "pd_end": "15 Nov 2026",
+    }
+    verdicts = compute_astrological_verdicts(
+        chart_data=mock_chart,
+        bb_data=mock_bb,
+        sav=sav,
+        bav=bav,
+        transit_dict=transit_dict,
+        dasha_data=dasha_data,
+        moon_details={"nakshatra": "Rohini", "nakshatra_idx": 3}
+    )
+
+    # 1. Career factsheet
+    career_fact = build_topic_factsheet(
+        "career", mock_chart, verdicts, dasha_data, transit_dict, 0, 1
+    )
+    assert "CAREER" in career_fact
+    assert "House 10" in career_fact
+    assert "VERDICT:" in career_fact
+
+    # 2. Wealth factsheet
+    wealth_fact = build_topic_factsheet(
+        "wealth", mock_chart, verdicts, dasha_data, transit_dict, 0, 1
+    )
+    assert "WEALTH" in wealth_fact
+    assert "House 2" in wealth_fact
+    assert "House 11" in wealth_fact
+    assert "VERDICT:" in wealth_fact
+
+    # 3. Marriage factsheet
+    marriage_fact = build_topic_factsheet(
+        "marriage", mock_chart, verdicts, dasha_data, transit_dict, 0, 1
+    )
+    assert "MARRIAGE" in marriage_fact
+    assert "House 7" in marriage_fact
+    assert "VERDICT:" in marriage_fact
+
+
+def test_fallback_reading_multidomain():
+    mock_chart = {
+        "Ascendant": {"sign": "Aries", "sign_idx": 0},
+        "Sun": {"sign": "Leo", "sign_idx": 4, "degree_total": 125.0},
+        "Mars": {"sign": "Scorpio", "sign_idx": 7, "degree_total": 215.0},
+        "Moon": {"sign": "Taurus", "sign_idx": 1, "degree_total": 45.0},
+        "Mercury": {"sign": "Virgo", "sign_idx": 5, "degree_total": 155.0},
+    }
+    mock_verdicts = {
+        "shadbala": {
+            "Sun": {"pct": 115, "verdict": "STRONG"},
+            "Mars": {"pct": 105, "verdict": "MODERATE"},
+            "Venus": {"pct": 110, "verdict": "STRONG"},
+            "Jupiter": {"pct": 108, "verdict": "STRONG"},
+        },
+        "houses": {
+            1: {"rank": 2, "rupas": 8.2, "verdict": "STRONG"},
+            2: {"rank": 3, "rupas": 7.5, "verdict": "STRONG"},
+            7: {"rank": 4, "rupas": 7.1, "verdict": "STRONG"},
+            10: {"rank": 1, "rupas": 8.9, "verdict": "STRONG / HIGH DOMINANCE"},
+        }
+    }
+
+    for topic in ["career", "wealth", "relationships", "marriage", "general"]:
+        fallback = generate_deterministic_fallback_reading(mock_chart, mock_verdicts, topic, "What is ahead for me?")
+        words = fallback.split()
+        assert len(words) > 70
+        assert len(words) < 240
+        # Check validation passes
+        is_valid, err, _, _ = validate_and_sanitize_reading(f"<reading>{fallback}</reading>", topic)
+        assert is_valid is True, f"Failed for topic {topic}: {err}"

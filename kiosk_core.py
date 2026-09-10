@@ -355,7 +355,8 @@ def compute_astrological_verdicts(
     return verdicts
 
 
-def build_health_factsheet(
+def build_topic_factsheet(
+    workflow_key: str,
     chart_data: Dict[str, Any],
     verdicts: Dict[str, Any],
     dasha_data: Dict[str, Any],
@@ -364,8 +365,8 @@ def build_health_factsheet(
     moon_sign_idx: int
 ) -> str:
     """
-    Compiles the pre-computed machine-verdict factsheet for the Health workflow.
-    Strictly clamps time to the 90-day Pratyantardasha/Antardasha window.
+    Compiles the domain-specific pre-computed machine-verdict factsheet for ANY workflow.
+    Pre-labels all numbers with verdicts (STRONG / WEAK / MODERATE / ACUTE FRICTION).
     """
     sb = verdicts.get("shadbala", {})
     hv = verdicts.get("houses", {})
@@ -373,65 +374,169 @@ def build_health_factsheet(
     tb_v = verdicts.get("transit_bav", {})
     mc_v = verdicts.get("mercury_combustion", {})
 
-    lagna_lord = SIGN_LORDS_DICT.get(asc_sign_idx, "Mars")
-    lagna_h_verdict = hv.get(1, {}).get("verdict", "MODERATE")
-    lagna_h_rank = hv.get(1, {}).get("rank", 6)
-    lagna_sav_pts = sav_v.get(1, {}).get("points", 28)
-    lagna_sav_verdict = sav_v.get(1, {}).get("verdict", "MODERATE BUFFER")
+    DOMAIN_CONFIGS = {
+        "career": {
+            "title": "CAREER, VOCATION & PROFESSIONAL MOMENTUM",
+            "primary_houses": [10, 6, 11, 2, 1],
+            "key_planets": ["Sun", "Saturn", "Jupiter", "Mercury"],
+            "timing_focus": "Immediate windows (next 1–3 months) & mid-term milestones (3–8 months)"
+        },
+        "generic_career": {
+            "title": "CAREER DIRECTION, VOCATION & ACADEMIC STREAM",
+            "primary_houses": [10, 1, 5, 9, 6],
+            "key_planets": ["Mercury", "Jupiter", "Sun", "Saturn"],
+            "timing_focus": "Medium-to-long term foundation and directional positioning"
+        },
+        "wealth": {
+            "title": "WEALTH, FINANCES & ASSET ACCUMULATION",
+            "primary_houses": [2, 11, 5, 9, 12],
+            "key_planets": ["Jupiter", "Venus", "Mercury", "Saturn"],
+            "timing_focus": "Cashflow velocity, savings retention buffers, and investment compounding"
+        },
+        "relationships": {
+            "title": "RELATIONSHIPS, LOVE & EMOTIONAL HARMONY",
+            "primary_houses": [7, 5, 2, 8, 12],
+            "key_planets": ["Venus", "Moon", "Jupiter", "Mars"],
+            "timing_focus": "Current emotional weather, communication rhythms, and relationship chemistry"
+        },
+        "marriage": {
+            "title": "MARRIAGE, SPOUSE & LONG-TERM MATRIMONY",
+            "primary_houses": [7, 2, 8, 4, 12],
+            "key_planets": ["Venus", "Jupiter", "Mars", "Saturn"],
+            "timing_focus": "Commitment readiness, matrimonial timing windows, and partnership stability"
+        },
+        "health": {
+            "title": "HEALTH, VITALITY & METABOLIC PACING",
+            "primary_houses": [1, 6, 8],
+            "key_planets": ["Sun", "Mars", "Moon", "Mercury"],
+            "timing_focus": "Strict 90-day vitality and recovery window (Pratyantardasha)"
+        },
+        "luck": {
+            "title": "LUCK, FORTUNE & BHAGYA EXPANSION",
+            "primary_houses": [9, 5, 1, 11],
+            "key_planets": ["Jupiter", "Sun", "Venus"],
+            "timing_focus": "Active grace windows, mentorship leverage, and karmic timing"
+        },
+        "children": {
+            "title": "CHILDREN, PROGENY & FAMILY EXPANSION",
+            "primary_houses": [5, 9, 2, 11],
+            "key_planets": ["Jupiter", "Venus", "Moon"],
+            "timing_focus": "Family expansion windows, parental guidance, and creative progeny"
+        },
+        "foreign": {
+            "title": "FOREIGN TRAVEL, RELOCATION & GLOBAL OPPORTUNITY",
+            "primary_houses": [12, 9, 3, 4],
+            "key_planets": ["Rahu", "Jupiter", "Moon", "Saturn"],
+            "timing_focus": "Relocation milestones, visa/travel cycles, and cross-border expansion"
+        },
+        "legal": {
+            "title": "LEGAL MATTERS, DISPUTES & RESOLUTION",
+            "primary_houses": [6, 8, 10, 11],
+            "key_planets": ["Mars", "Saturn", "Jupiter"],
+            "timing_focus": "Dispute navigation, negotiation leverage, and settlement timing"
+        },
+        "predictor_2027": {
+            "title": "YEAR AHEAD / 4-QUARTER MILESTONE BLUEPRINT",
+            "primary_houses": [1, 10, 11, 9, 7, 2, 6],
+            "key_planets": ["Jupiter", "Saturn", "Rahu", "Sun"],
+            "timing_focus": "Quarterly progression: Q1 (Jan-Mar), Q2 (Apr-Jun), Q3 (Jul-Sep), Q4 (Oct-Dec)"
+        }
+    }
+    cfg = DOMAIN_CONFIGS.get(workflow_key, {
+        "title": f"{workflow_key.upper().replace('_', ' ')} & STRATEGIC GUIDANCE",
+        "primary_houses": [1, 10, 11, 9, 7, 2, 6],
+        "key_planets": ["Sun", "Moon", "Jupiter", "Saturn"],
+        "timing_focus": "Current planetary periods and live transit cycles"
+    })
 
-    lagna_lord_sb = sb.get(lagna_lord, {})
-    sun_sb = sb.get("Sun", {})
-    mars_sb = sb.get("Mars", {})
+    pd_name = dasha_data.get("current_pd", "Active Sub-period")
+    ad_name = dasha_data.get("ad", "Active Sub-period")
+    md_name = dasha_data.get("md", "Active Mahadasha")
+    pd_start = dasha_data.get("pd_start", "Current")
+    pd_end = dasha_data.get("pd_end", "Next 90 Days")
+    ad_start = dasha_data.get("ad_start", "")
+    ad_end = dasha_data.get("ad_end", "")
 
-    h6_info = hv.get(6, {})
-    h6_sav_info = sav_v.get(6, {})
-    h8_info = hv.get(8, {})
-    h8_sav_info = sav_v.get(8, {})
+    lines = [f"### {cfg['title']} (PRE-COMPUTED MACHINE VERDICTS)\n"]
 
-    friction_lines = []
-    for p_name in ["Mars", "Saturn", "Rahu", "Sun", "Mercury", "Jupiter"]:
+    # Timing header
+    if workflow_key == "health":
+        lines.extend([
+            "[TIME HORIZON: STRICT 90-DAY WINDOW]",
+            f"- Active Cosmic Window: {pd_name} (Pratyantardasha) within {ad_name} (Antardasha)",
+            f"- Timing Boundaries: {pd_start} to {pd_end}",
+            "- MANDATORY TIMING RULE: Anchor all health guidance strictly within this 90-day window. NEVER reference distant years (like 2031).\n"
+        ])
+    else:
+        lines.extend([
+            "[TIME HORIZON & DASHA TIMELINE]",
+            f"- Running Dasha: {md_name} Mahadasha → {ad_name} Antardasha → {pd_name} Pratyantardasha",
+            f"- Antardasha Window: {ad_start} to {ad_end} | Pratyantardasha Window: {pd_start} to {pd_end}",
+            f"- Focus Horizons: {cfg['timing_focus']}\n"
+        ])
+
+    # Section 1: Domain Foundation & House Capacities
+    lines.append("[1. DOMAIN FOUNDATION & HOUSE CAPACITIES (BHAVA BALA & SAV VERDICTS)]")
+    for h in cfg["primary_houses"]:
+        h_info = hv.get(h, {})
+        h_sav = sav_v.get(h, {})
+        r_idx = (asc_sign_idx + h - 1) % 12
+        h_lord = SIGN_LORDS_DICT.get(r_idx, "Unknown")
+        lord_sb = sb.get(h_lord, {})
+        lines.append(
+            f"- House {h} (Lord: {h_lord} - {lord_sb.get('pct', 100)}% {lord_sb.get('verdict', 'MODERATE')}): "
+            f"Bhava Bala Rank {h_info.get('rank', 6)}/12 — VERDICT: {h_info.get('verdict', 'MODERATE')} | "
+            f"SAV: {h_sav.get('points', 28)} pts — VERDICT: {h_sav.get('verdict', 'MODERATE BUFFER')}"
+        )
+    lines.append("")
+
+    # Section 2: Key Planetary Engines
+    lines.append("[2. KEY PLANETARY ENGINES (SHADBALA VERDICTS)]")
+    for p_name in cfg["key_planets"]:
+        p_sb = sb.get(p_name, {})
+        lines.append(f"- {p_name}: {p_sb.get('pct', 100)}% of required Shadbala — VERDICT: {p_sb.get('verdict', 'MODERATE')}")
+    lines.append("")
+
+    # Section 3: Active Transit Weather
+    lines.append("[3. ACTIVE TRANSIT WEATHER (WITH BAV BINDUS & VERDICTS)]")
+    target_houses = set(cfg["primary_houses"])
+    transit_lines = []
+    for p_name in ["Jupiter", "Saturn", "Rahu", "Mars", "Sun", "Mercury", "Venus"]:
         if p_name in transit_dict:
             tp = transit_dict[p_name]
             t_sign_idx = tp["sign_idx"]
             h_asc = (t_sign_idx - asc_sign_idx) % 12 + 1
             h_moon = (t_sign_idx - moon_sign_idx) % 12 + 1
-            if h_asc in [1, 6, 8] or h_moon in [1, 6, 8]:
+            if h_asc in target_houses or h_moon in target_houses or p_name in ["Jupiter", "Saturn", "Rahu"]:
                 b_info = tb_v.get(p_name, {})
                 pts = b_info.get("bindus", 4)
                 v_text = b_info.get("verdict", "MODERATE")
                 rx_str = " (Rx)" if tp.get("status") == "Rx" else ""
-                friction_lines.append(
+                transit_lines.append(
                     f"- {p_name}{rx_str} in House {h_asc} from Lagna / House {h_moon} from Moon: "
                     f"Individual BAV = {pts}/8 — VERDICT: {v_text}"
                 )
-    if not friction_lines:
-        friction_lines.append("- No acute malefic transits directly in 1st, 6th, or 8th house; moderate background transit weather.")
+    if not transit_lines:
+        transit_lines.append("- Transit weather is balanced across active domain houses.")
+    lines.append("\n".join(transit_lines) + "\n")
 
-    pd_name = dasha_data.get("current_pd", "Active Period")
-    ad_name = dasha_data.get("ad", "Active Sub-period")
-    pd_start = dasha_data.get("pd_start", "Current")
-    pd_end = dasha_data.get("pd_end", "Next 90 Days")
+    # Section 4: Cognitive & Emotional Weather
+    lines.append("[4. COGNITIVE & EMOTIONAL WEATHER]")
+    lines.append(f"- Mercury Combustion Distance: {mc_v.get('distance_deg', 10.0)}° from Sun — VERDICT: {mc_v.get('verdict', 'CLEAR')}")
 
-    lines = [
-        "### HEALTH & VITALITY DOMAIN FACTSHEET (PRE-COMPUTED MACHINE VERDICTS)\n",
-        "[TIME HORIZON: STRICT 90-DAY WINDOW]",
-        f"- Active Cosmic Window: {pd_name} (Pratyantardasha) within {ad_name} (Antardasha)",
-        f"- Timing Boundaries: {pd_start} to {pd_end}",
-        "- MANDATORY TIMING RULE: Anchor all health guidance strictly within this 90-day window. NEVER reference distant years (like 2031).\n",
-        "[1. CORE CONSTITUTIONAL VITALITY & IMMUNITY]",
-        f"- 1st House (Lagna - Physical Resilience): Rank {lagna_h_rank}/12 — VERDICT: {lagna_h_verdict} | SAV: {lagna_sav_pts} pts — VERDICT: {lagna_sav_verdict}",
-        f"- Lagna Lord ({lagna_lord}): {lagna_lord_sb.get('pct', 100)}% of required Shadbala — VERDICT: {lagna_lord_sb.get('verdict', 'MODERATE')}",
-        f"- Sun (Prana / Core Stamina): {sun_sb.get('pct', 100)}% of required Shadbala — VERDICT: {sun_sb.get('verdict', 'MODERATE')}",
-        f"- Mars (Physical / Muscular Drive): {mars_sb.get('pct', 100)}% of required Shadbala — VERDICT: {mars_sb.get('verdict', 'MODERATE')}\n",
-        "[2. ACUTE & METABOLIC FRICTION HOUSES]",
-        f"- 6th House (Daily Routine / Acute Stress / Digestion): Rank {h6_info.get('rank', 6)}/12 — VERDICT: {h6_info.get('verdict', 'MODERATE')} | SAV: {h6_sav_info.get('points', 28)} pts — VERDICT: {h6_sav_info.get('verdict', 'MODERATE')}",
-        f"- 8th House (Deep Metabolic Recovery / Chronic Endurance / Burnout): Rank {h8_info.get('rank', 6)}/12 — VERDICT: {h8_info.get('verdict', 'MODERATE')} | SAV: {h8_sav_info.get('points', 28)} pts — VERDICT: {h8_sav_info.get('verdict', 'MODERATE')}\n",
-        "[3. ACTIVE TRANSIT FRICTION POINTS (NEXT 90 DAYS)]",
-        "\n".join(friction_lines) + "\n",
-        "[4. NERVOUS SYSTEM & COGNITIVE WEATHER]",
-        f"- Mercury Combustion Distance: {mc_v.get('distance_deg', 10.0)}° from Sun — VERDICT: {mc_v.get('verdict', 'CLEAR')}"
-    ]
     return "\n".join(lines)
+
+
+def build_health_factsheet(
+    chart_data: Dict[str, Any],
+    verdicts: Dict[str, Any],
+    dasha_data: Dict[str, Any],
+    transit_dict: Dict[str, Any],
+    asc_sign_idx: int,
+    moon_sign_idx: int
+) -> str:
+    """Wrapper ensuring 100% backwards compatibility with health-specific callers."""
+    return build_topic_factsheet("health", chart_data, verdicts, dasha_data, transit_dict, asc_sign_idx, moon_sign_idx)
 
 
 def validate_and_sanitize_reading(raw_text: str, workflow_key: str = "general") -> Tuple[bool, str, str, str]:
@@ -510,29 +615,97 @@ def generate_deterministic_fallback_reading(
 ) -> str:
     """
     Fallback safety net: Emits a polished, chart-grounded, professional reading based on Python's machine verdicts.
-    Guarantees the kiosk never crashes, never freezes, and never outputs banned phrases.
+    Guarantees the kiosk never crashes, never freezes, and never outputs banned phrases across any workflow.
     """
     sb = verdicts.get("shadbala", {})
     hv = verdicts.get("houses", {})
     sun_sb = sb.get("Sun", {}).get("pct", 100)
+    jup_sb = sb.get("Jupiter", {}).get("pct", 100)
+    sat_sb = sb.get("Saturn", {}).get("pct", 100)
+    ven_sb = sb.get("Venus", {}).get("pct", 100)
+    h10 = hv.get(10, {})
+    h2 = hv.get(2, {})
+    h7 = hv.get(7, {})
     lagna_h = hv.get(1, {})
 
-    vitality_phrase = "operates with steady natural stamina" if sun_sb >= 100 else "calls for deliberate physical pacing"
-    recovery_phrase = "rebounds smoothly with consistent daily discipline" if lagna_h.get("rank", 6) <= 6 else "requires conscious protection against sudden overexertion"
+    if workflow_key == "health":
+        vitality_phrase = "operates with steady natural stamina" if sun_sb >= 100 else "calls for deliberate physical pacing"
+        recovery_phrase = "rebounds smoothly with consistent daily discipline" if lagna_h.get("rank", 6) <= 6 else "requires conscious protection against sudden overexertion"
+        p1 = (
+            f"Over the coming 90 days, your vitality {vitality_phrase} while your overall physical recovery {recovery_phrase}. "
+            f"Your constitutional foundation provides reliable underlying resilience, meaning your stamina holds up well during focused efforts "
+            f"provided you avoid sudden spikes of chronic exhaustion. Rather than pushing through fatigue, aligning your daily rhythms with "
+            f"predictable work-rest intervals ensures sustained productivity without depleting your physical reserves."
+        )
+        p2 = (
+            f"To protect your mental clarity and metabolic equilibrium right now, prioritize consistent meal timing and defend a non-negotiable "
+            f"evening wind-down window. Structure demanding cognitive workloads into dedicated morning focus blocks, and avoid multitasking "
+            f"across late evening hours. Treating deliberate rest intervals as an essential component of your daily routine keeps your vitality "
+            f"at peak performance throughout this 90-day phase."
+        )
+        return f"{p1}\n\n{p2}"
 
-    p1 = (
-        f"Over the coming 90 days, your vitality {vitality_phrase} while your overall physical recovery {recovery_phrase}. "
-        f"Your constitutional foundation provides reliable underlying resilience, meaning your stamina holds up well during focused efforts "
-        f"provided you avoid sudden spikes of chronic exhaustion. Rather than pushing through fatigue, aligning your daily rhythms with "
-        f"predictable work-rest intervals ensures sustained productivity without depleting your physical reserves."
-    )
-    p2 = (
-        f"To protect your mental clarity and metabolic equilibrium right now, prioritize consistent meal timing and defend a non-negotiable "
-        f"evening wind-down window. Structure demanding cognitive workloads into dedicated morning focus blocks, and avoid multitasking "
-        f"across late evening hours. Treating deliberate rest intervals as an essential component of your daily routine keeps your vitality "
-        f"at peak performance throughout this 90-day phase."
-    )
-    return f"{p1}\n\n{p2}"
+    elif workflow_key in ["career", "generic_career"]:
+        authority_phrase = "operates with strong authority and upward leverage" if h10.get("rank", 6) <= 6 else "calls for strategic consolidation and disciplined execution"
+        discipline_phrase = "rewards structured responsibility and proven capability" if sat_sb >= 100 else "demands deliberate patience when navigating team dynamics"
+        p1 = (
+            f"Over the coming 3 to 6 months, your professional momentum {authority_phrase}, anchored by your foundational career baseline. "
+            f"Current planetary weather {discipline_phrase}, indicating that demonstrating dependable competence and solving high-impact problems "
+            f"will open more doors than forcing premature transitions. Your underlying drive remains capable of handling increased responsibility "
+            f"provided you channel your energy into visible, measurable deliverables."
+        )
+        p2 = (
+            f"To maximize your career trajectory and safeguard your professional reputation right now, focus on transparent stakeholder alignment "
+            f"and avoid uncalculated confrontations across team boundaries. Verify all written commitments and contract details thoroughly before "
+            f"making major directional moves. Maintaining consistent daily execution while steering clear of workplace friction ensures your authority "
+            f"grows steadily throughout this cycle."
+        )
+        return f"{p1}\n\n{p2}"
+
+    elif workflow_key == "wealth":
+        wealth_phrase = "points to steady cash flow retention and compounding stability" if h2.get("rank", 6) <= 6 else "calls for disciplined liquidity management and budget guardrails"
+        growth_phrase = "favors structured, long-term capital preservation" if jup_sb >= 100 else "advises against speculative acceleration or impulsive spending"
+        p1 = (
+            f"Over the coming months, your financial outlook {wealth_phrase}, supported by your underlying material foundation. "
+            f"Your chart indicates reliable capacity for capital accumulation, meaning steady efforts compound effectively provided you avoid "
+            f"unnecessary leaks in non-essential expenditures. This is a favorable phase for building financial security through methodical savings "
+            f"rather than chasing high-risk windfalls."
+        )
+        p2 = (
+            f"To protect your net worth and maintain healthy liquidity right now, establish clear spending limits and defend an emergency cash reserve. "
+            f"Pace major acquisitions deliberately and resist the temptation to make speculative investments during emotionally volatile market cycles. "
+            f"Focusing on debt reduction, capital retention, and methodical budgeting will ensure your financial resilience expands steadily across this window."
+        )
+        return f"{p1}\n\n{p2}"
+
+    elif workflow_key in ["relationships", "marriage"]:
+        rel_phrase = "centers on harmonious mutual understanding and shared alignment" if h7.get("rank", 6) <= 6 else "calls for conscious emotional patience and healthy communication boundaries"
+        grace_phrase = "supports deeper emotional bonding when expectations are clearly voiced" if ven_sb >= 100 else "counsels against assuming feelings or letting silent grievances build"
+        p1 = (
+            f"Over the coming months, your relationship environment {rel_phrase}, supported by your underlying partnership foundation. "
+            f"Planetary influences indicate that mutual respect and emotional connection grow steadily provided both partners communicate with "
+            f"openness and vulnerability. This phase {grace_phrase}, making honest and mature dialogue your strongest tool for lasting harmony."
+        )
+        p2 = (
+            f"To navigate interpersonal rhythms constructively right now, give each other space during high-pressure work weeks and address emerging "
+            f"misunderstandings early before they escalate. Practice active listening rather than reacting defensively during sensitive discussions. "
+            f"Prioritizing calm mutual appreciation and shared quality time will keep your connection grounded and resilient throughout this period."
+        )
+        return f"{p1}\n\n{p2}"
+
+    else:
+        p1 = (
+            f"Over the coming months, your life momentum operates on a dependable foundation that supports steady progress when your efforts "
+            f"are channeled into clear, singular priorities. Your chart reveals strong underlying resilience, indicating that you have the stamina "
+            f"and focus to handle demanding circumstances as long as you pace yourself deliberately and avoid spreading your energy across too many "
+            f"competing commitments simultaneously."
+        )
+        p2 = (
+            f"To navigate this period with maximum effectiveness right now, establish structured daily habits and protect your focus against "
+            f"unproductive distractions. Verify important details thoroughly before finalizing major life decisions, and approach new opportunities "
+            f"with measured discernment. Maintaining consistent personal discipline and patience will ensure your long-term goals advance securely."
+        )
+        return f"{p1}\n\n{p2}"
 
 
 def compute_kiosk_reading(
@@ -982,8 +1155,13 @@ def compute_kiosk_reading(
         moon_details=moon_details
     )
 
-    # Build domain-specific factsheets
-    health_factsheet = build_health_factsheet(
+    # Workflows classification
+    workflow_key = classify_workflow(user_question)
+    current_date = now_utc.strftime("%d %B %Y")
+
+    # Build domain-specific factsheet with machine verdicts
+    topic_factsheet = build_topic_factsheet(
+        workflow_key=workflow_key,
         chart_data=chart_data,
         verdicts=verdicts,
         dasha_data=dasha_data,
@@ -991,10 +1169,6 @@ def compute_kiosk_reading(
         asc_sign_idx=asc_sign_idx,
         moon_sign_idx=moon_sign_idx
     )
-
-    # Workflows classification
-    workflow_key = classify_workflow(user_question)
-    current_date = now_utc.strftime("%d %B %Y")
 
     # Safe placeholder replacement across the workflow template
     replacements = {
@@ -1012,7 +1186,8 @@ def compute_kiosk_reading(
         "{yoga_string}": yoga_string,
         "{karaka_string}": karaka_string,
         "{doshas_string}": doshas_string,
-        "{health_factsheet}": health_factsheet,
+        "{topic_factsheet}": topic_factsheet,
+        "{health_factsheet}": topic_factsheet,
         "{current_date}": current_date,
     }
 
@@ -1052,26 +1227,34 @@ def compute_kiosk_reading(
         user_prompt += f"\n\nACTIVE AUSPICIOUS YOGAS IN EFFECT: [{active_names}]. Explicitly name and weave the native's active yoga into the opening cosmic fuel / opportunity analysis as their primary engine of promise."
     if workflow_key == "predictor_2027":
         user_prompt += (
-            "\n\nFORMAT INSTRUCTION: Deliver the structured 4-Quarter Milestone Blueprint (Q1, Q2, Q3, Q4) "
-            "with exactly 1 crisp sentence for '✦ Where to Push' and 1 crisp sentence for '▲ Where to Steer with Care' for each quarter, as specified in the 2027 Milestone Blueprint. Total response strictly under 300 words."
+            "\n\nEXECUTION PROTOCOL (MANDATORY): "
+            "1. Output <data_audit> completing the 4-task internal worksheet based on the pre-computed machine verdicts in {topic_factsheet}. "
+            "2. Output <reading> delivering the structured 4-Quarter Milestone Blueprint (Q1, Q2, Q3, Q4) with exactly 1 crisp sentence for '✦ Where to Push' and 1 crisp sentence for '▲ Where to Steer with Care' for each quarter, as specified in the 2027 Milestone Blueprint. Total reading strictly under 300 words. "
+            "Translate all astrological verdicts into natural, mature human advice. NEVER write technical terms like SAV, BAV, Shadbala, Bhava Bala, bindus, or dasha abbreviations inside <reading>."
         )
     elif workflow_key == "health":
         user_prompt += (
             "\n\nEXECUTION PROTOCOL (MANDATORY): "
-            "1. Output <data_audit> completing all 4 tasks based on the pre-computed machine verdicts in {health_factsheet}. "
+            "1. Output <data_audit> completing all 4 tasks based on the pre-computed machine verdicts in {topic_factsheet}. "
             "2. Output <reading> with EXACTLY 2 punchy, jargon-free paragraphs (strictly under 240 words total). "
             "Translate all astrological verdicts into natural, mature human advice. NEVER write technical terms like SAV, BAV, Shadbala, Bhava Bala, bindus, or dasha abbreviations inside <reading>. "
             "3. Anchor strictly to the 90-day window. Zero mention of temples, dal donations, gemstones, or water splashing."
         )
     else:
-        user_prompt += "\n\nCRITICAL CONCISENESS DIRECTIVE: Keep the entire prediction punchy, crisp, and under 240 words total across 2 short paragraphs so the native gets immediate clarity without reading fatigue."
+        user_prompt += (
+            "\n\nEXECUTION PROTOCOL (MANDATORY): "
+            "1. Output <data_audit> completing all 4 tasks concisely (brief bullet lines, strictly under 200 words total) based on the pre-computed machine verdicts in {topic_factsheet}. "
+            "2. Output <reading> with EXACTLY 2 punchy, jargon-free paragraphs (strictly under 240 words total). "
+            "Translate all astrological verdicts into natural, mature human advice. NEVER write technical terms like SAV, BAV, Shadbala, Bhava Bala, bindus, or dasha abbreviations inside <reading>. "
+            "3. Ground all timing in verified planetary windows (next 1–3 months, 3–8 months). Zero mention of superstitious rituals, donations, or generic wellness tropes."
+        )
 
     # Internal LLM execution helper
     def _execute_llm_call(sys_p: str, usr_p: str) -> str:
         if provider == "anthropic":
             anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5")
             ant_client = anthropic.Anthropic(api_key=api_key)
-            max_tok = 1200 if workflow_key == "predictor_2027" else (1600 if workflow_key == "health" else 950)
+            max_tok = 2200
             ant_kwargs = {
                 "model": anthropic_model,
                 "system": sys_p,
@@ -1089,7 +1272,7 @@ def compute_kiosk_reading(
             return "".join([b.text for b in resp.content if getattr(b, "type", "") == "text" or (hasattr(b, "text") and not hasattr(b, "thinking"))]).strip() if resp.content else ""
         else:
             client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
-            max_tok = 1100 if workflow_key == "predictor_2027" else (1500 if workflow_key == "health" else 900)
+            max_tok = 2000
             resp = client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[
