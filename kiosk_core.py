@@ -147,39 +147,44 @@ def get_location_data(city_name: str) -> Optional[Tuple[float, float, str]]:
 
     return None
 
-def _get_api_credentials() -> Tuple[str, str]:
-    """Retrieve (provider, api_key) from env or secrets."""
-    # 1. Anthropic Claude (preferred)
-    ant_key = os.getenv("ANTHROPIC_API_KEY")
-    if not ant_key:
-        secrets_path = os.path.join(os.path.dirname(__file__), ".streamlit", "secrets.toml")
-        if os.path.exists(secrets_path):
-            try:
-                with open(secrets_path, "r", encoding="utf-8") as f:
-                    for line in f:
-                        if "ANTHROPIC_API_KEY" in line and "=" in line:
-                            ant_key = line.split("=", 1)[1].strip().strip('"').strip("'")
-                            break
-            except Exception:
-                pass
-    if ant_key and anthropic is not None:
-        return "anthropic", ant_key
+def _read_secret(key_name: str) -> str:
+    val = os.getenv(key_name)
+    if val:
+        return val.strip()
+    secrets_path = os.path.join(os.path.dirname(__file__), ".streamlit", "secrets.toml")
+    if os.path.exists(secrets_path):
+        try:
+            with open(secrets_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    if key_name in line and "=" in line:
+                        return line.split("=", 1)[1].strip().strip('"').strip("'")
+        except Exception:
+            pass
+    return ""
 
-    # 2. DeepSeek (fallback)
-    deep_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY")
-    if not deep_key:
-        secrets_path = os.path.join(os.path.dirname(__file__), ".streamlit", "secrets.toml")
-        if os.path.exists(secrets_path):
-            try:
-                with open(secrets_path, "r", encoding="utf-8") as f:
-                    for line in f:
-                        if "DEEPSEEK_API_KEY" in line and "=" in line:
-                            deep_key = line.split("=", 1)[1].strip().strip('"').strip("'")
-                            break
-            except Exception:
-                pass
-    if deep_key:
-        return "deepseek", deep_key
+def _get_api_credentials() -> Tuple[str, str]:
+    """Retrieve (provider, api_key) from env or secrets based on LLM_PROVIDER preference."""
+    pref = os.getenv("LLM_PROVIDER", "deepseek").lower().strip()
+
+    ant_key = _read_secret("ANTHROPIC_API_KEY")
+    deep_key = _read_secret("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY", "").strip()
+
+    # Prioritize DeepSeek Flash for testing / cost efficiency
+    if pref in ["deepseek", "deepseek-flash", "deepseek_flash"]:
+        if deep_key:
+            return "deepseek", deep_key
+        if ant_key and anthropic is not None:
+            return "anthropic", ant_key
+    elif pref == "anthropic":
+        if ant_key and anthropic is not None:
+            return "anthropic", ant_key
+        if deep_key:
+            return "deepseek", deep_key
+    else:
+        if deep_key:
+            return "deepseek", deep_key
+        if ant_key and anthropic is not None:
+            return "anthropic", ant_key
 
     return "", ""
 
@@ -1272,19 +1277,28 @@ def compute_kiosk_reading(
             return "".join([b.text for b in resp.content if getattr(b, "type", "") == "text" or (hasattr(b, "text") and not hasattr(b, "thinking"))]).strip() if resp.content else ""
         else:
             client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
-            max_tok = 2000
-            resp = client.chat.completions.create(
-                model="deepseek-chat",
-                messages=[
-                    {"role": "system", "content": sys_p},
-                    {"role": "user", "content": usr_p}
-                ],
-                temperature=0.65,
-                presence_penalty=0.25,
-                frequency_penalty=0.2,
-                max_tokens=max_tok
-            )
-            return resp.choices[0].message.content or ""
+            max_tok = 4096
+            deepseek_model = os.getenv("DEEPSEEK_MODEL", "deepseek-flash")
+            logger.info(f"Executing DeepSeek call with model: {deepseek_model}")
+            try:
+                resp = client.chat.completions.create(
+                    model=deepseek_model,
+                    messages=[
+                        {"role": "system", "content": sys_p},
+                        {"role": "user", "content": usr_p}
+                    ],
+                    temperature=0.65,
+                    presence_penalty=0.25,
+                    frequency_penalty=0.2,
+                    max_tokens=max_tok
+                )
+                txt = resp.choices[0].message.content or ""
+                finish_reason = resp.choices[0].finish_reason if resp.choices else "unknown"
+                logger.info(f"DeepSeek call completed ({len(txt)} chars, finish_reason={finish_reason})")
+                return txt
+            except Exception as e:
+                logger.error(f"DeepSeek call failed: {e}")
+                raise
 
     # Attempt 1
     raw_response = _execute_llm_call(system_prompt, user_prompt)
@@ -1300,7 +1314,7 @@ def compute_kiosk_reading(
             f"2. You must output <reading> with EXACTLY 2 short paragraphs strictly under 240 words. "
             f"3. ZERO superstitious remedies (no temples, no dal/food donations, no gemstones). "
             f"4. ZERO generic self-help clichés (no splashing water, no 8 glasses of water, no morning sunlight, no generic meditation). "
-            f"5. ZERO raw astrological jargon or code leaks like (Rx) or [COMBUST]."
+            f"5. ZERO raw astrological jargon or code leaks like (Rx), [COMBUST], Bhava Bala, Shadbala, SAV, BAV, or house numbers inside <reading>."
         )
         try:
             raw_response_2 = _execute_llm_call(system_prompt, retry_prompt)

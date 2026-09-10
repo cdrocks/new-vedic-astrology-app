@@ -623,7 +623,7 @@ def ai_classify_question(text: str, client: Any, provider: str = "anthropic") ->
             raw = response.content[0].text if response.content else ""
         else:
             response = client.chat.completions.create(
-                model="deepseek-chat",  # cheaper/faster than deepseek-v4-pro
+                model=os.getenv("DEEPSEEK_MODEL", "deepseek-flash"),
                 messages=[
                     {"role": "system", "content": _AI_SAFETY_SYSTEM_PROMPT},
                     {"role": "user", "content": f"Question: {text}"},
@@ -1046,7 +1046,11 @@ if submit_button:
     provider = None
     client = None
 
-    if anthropic_key and anthropic is not None:
+    pref_provider = os.getenv("LLM_PROVIDER", "deepseek").lower().strip()
+    if pref_provider in ["deepseek", "deepseek-flash", "deepseek_flash"] and deepseek_key:
+        provider = "deepseek"
+        client = OpenAI(api_key=deepseek_key, base_url="https://api.deepseek.com")
+    elif anthropic_key and anthropic is not None:
         provider = "anthropic"
         client = anthropic.Anthropic(api_key=anthropic_key)
     elif deepseek_key:
@@ -1776,8 +1780,8 @@ if submit_button:
 
             # --- DEBUG: VIEW EXACT PROMPT ---
             if not is_production():
-                model_name = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5") if provider == "anthropic" else "deepseek-chat"
-                provider_title = f"Claude ({model_name})" if provider == "anthropic" else "DeepSeek"
+                model_name = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5") if provider == "anthropic" else os.getenv("DEEPSEEK_MODEL", "deepseek-flash")
+                provider_title = f"Claude ({model_name})" if provider == "anthropic" else f"DeepSeek ({model_name})"
                 with st.expander(f"🔍 Debug — View raw prompt sent to {provider_title}"):
                     st.text(f"Provider: {provider_title}\n")
                     st.text(f"Workflow: {workflow_type}\n")
@@ -1811,7 +1815,7 @@ if submit_button:
                 raw_content = "".join([b.text for b in response.content if getattr(b, "type", "") == "text" or (hasattr(b, "text") and not hasattr(b, "thinking"))]).strip() if response.content else None
             else:
                 response = client.chat.completions.create(
-                    model="deepseek-chat",
+                    model=os.getenv("DEEPSEEK_MODEL", "deepseek-flash"),
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": f"The native asks: <question>{user_question}</question>"}
